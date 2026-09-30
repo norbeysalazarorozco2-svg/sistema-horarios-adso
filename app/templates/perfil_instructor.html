@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil del instructor{% endblock %}
+{% block meta_description %}Consulta tus fichas a cargo y solicita asignaturas transversales del SENA ADSO.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/perfil_instructor.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading perfil-heading">
+  <div>
+    <span class="page-heading__eyebrow">Perfil del instructor</span>
+    <div class="flex items-center gap-3 flex-wrap mb-4">
+      <span class="badge badge-primary">Instructor</span>
+      <span class="badge badge-accent" id="perfil-estado-badge">Perfil activo</span>
+    </div>
+    <h1 class="page-heading__title" id="perfil-nombre">{{ instructor_nombre or 'Instructor' }}</h1>
+    <p class="page-heading__subtitle" id="perfil-correo">Cargando información del instructor…</p>
+  </div>
+  <div class="perfil-header-actions">
+    <div class="perfil-modo-prueba">
+      <label class="form-label" for="selector-modo-prueba">Modo de prueba</label>
+      <select class="form-input" id="selector-modo-prueba" aria-describedby="modo-prueba-ayuda">
+        <option value="nuevo" {% if es_nuevo %}selected{% endif %}>Instructor Nuevo</option>
+        <option value="antiguo" {% if not es_nuevo %}selected{% endif %}>Instructor Antiguo</option>
+      </select>
+      <span class="form-hint" id="modo-prueba-ayuda">Temporal; no modifica los datos del instructor.</span>
+    </div>
+    <a class="btn btn-secondary" href="/disponibilidad">Editar disponibilidad</a>
+  </div>
+</header>
+
+<div class="alert alert-error mb-6" id="perfil-error" role="alert" hidden></div>
+
+<section class="perfil-resumen" aria-label="Resumen del perfil">
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__label">Fichas a cargo</span>
+    <strong class="perfil-resumen__valor" id="perfil-fichas-count">—</strong>
+  </div>
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__label">Horas semanales</span>
+    <strong class="perfil-resumen__valor" id="perfil-horas">—</strong>
+  </div>
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__label">Competencias</span>
+    <strong class="perfil-resumen__valor" id="perfil-competencias-count">—</strong>
+  </div>
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__label">Antigüedad</span>
+    <strong class="perfil-resumen__valor perfil-resumen__valor--small" id="perfil-antiguedad">—</strong>
+  </div>
+</section>
+
+<section class="card mb-8" aria-labelledby="fichas-heading">
+  <div class="perfil-section-heading">
+    <div>
+      <h2 class="card__title" id="fichas-heading">Fichas a cargo</h2>
+      <p class="card__subtitle" id="fichas-subtitle">Consulta tus asignaciones y competencias.</p>
+    </div>
+  </div>
+
+  <div class="perfil-empty hidden" id="fichas-mensaje" role="status">
+    <strong>No necesitas fichas a cargo aún.</strong>
+    <p>Como estás en tus primeros 3 meses como instructor, la gestora te asignará fichas más adelante.</p>
+  </div>
+
+  <div class="perfil-table-wrap" id="fichas-tabla-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Ficha</th>
+          <th scope="col">Programa</th>
+          <th scope="col">Trimestre</th>
+          <th scope="col">Competencias</th>
+          <th scope="col">Horas semanales</th>
+        </tr>
+      </thead>
+      <tbody id="fichas-body">
+        <tr><td colspan="5" class="perfil-loading">Cargando fichas…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card mb-8" id="transversales-section" aria-labelledby="transversales-heading" {% if es_nuevo %}hidden{% endif %}>
+  <div class="perfil-section-heading">
+    <div>
+      <h2 class="card__title" id="transversales-heading">Transversales</h2>
+      <p class="card__subtitle">Solicita a la Gestora las asignaturas transversales de tus fichas e indica tus horas, bloque o comentarios sugeridos.</p>
+    </div>
+  </div>
+
+  <form id="form-transversales" novalidate>
+    <fieldset class="perfil-fieldset">
+      <legend class="perfil-legend">Selecciona las fichas a cargo</legend>
+      <div class="perfil-fichas-seleccion" id="transversales-fichas"></div>
+    </fieldset>
+
+    <fieldset class="perfil-fieldset">
+      <legend class="perfil-legend">Selecciona las asignaturas transversales</legend>
+      <div class="perfil-asignaturas" id="transversales-asignaturas">
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Inglés" />
+          <span>Inglés</span>
+        </label>
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Ética" />
+          <span>Ética</span>
+        </label>
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Promover" />
+          <span>Promover</span>
+        </label>
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Salud Ocupacional" />
+          <span>Salud Ocupacional</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="perfil-detalles">
+      <div class="form-group">
+        <label class="form-label" for="transversales-horas">Horas sugeridas (opcional)</label>
+        <input
+          class="form-input"
+          id="transversales-horas"
+          name="horas_sugeridas"
+          type="number"
+          min="0"
+          max="40"
+          step="0.5"
+          placeholder="Ej. 2 horas semanales"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="transversales-bloque">Bloque sugerido (opcional)</label>
+        <input
+          class="form-input"
+          id="transversales-bloque"
+          name="bloque_sugerido"
+          type="text"
+          maxlength="120"
+          placeholder="Ej. lunes y miércoles, 6:00 a 8:00"
+        />
+      </div>
+      <div class="form-group perfil-detalles__ancho">
+        <label class="form-label" for="transversales-comentarios">Comentarios adicionales</label>
+        <textarea
+          class="form-input perfil-comentarios"
+          id="transversales-comentarios"
+          name="comentarios"
+          maxlength="500"
+          placeholder="Escribe cualquier información que la Gestora deba tener en cuenta"
+        ></textarea>
+      </div>
+    </div>
+
+    <p class="form-hint mb-4" id="transversales-ayuda">Selecciona al menos una ficha y una asignatura para continuar.</p>
+    <button type="submit" class="btn btn-primary" id="btn-solicitar-transversales" disabled>
+      Enviar solicitud a la Gestora
+    </button>
+  </form>
+</section>
+
+<section class="card" id="solicitudes-section" aria-labelledby="solicitudes-heading">
+  <div class="perfil-section-heading">
+    <div>
+      <h2 class="card__title" id="solicitudes-heading">Solicitudes enviadas</h2>
+      <p class="card__subtitle">La Gestora coordinará los bloques confirmados.</p>
+    </div>
+  </div>
+  <div class="perfil-empty hidden" id="solicitudes-mensaje" role="status">
+    <strong>No has enviado solicitudes.</strong>
+    <p>Cuando solicites transversales, aquí verás el estado de coordinación.</p>
+  </div>
+  <div class="perfil-table-wrap" id="solicitudes-tabla-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Ficha</th>
+          <th scope="col">Transversales</th>
+          <th scope="col">Horas sugeridas</th>
+          <th scope="col">Bloque</th>
+          <th scope="col">Comentarios</th>
+          <th scope="col">Fecha</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Gestora</th>
+        </tr>
+      </thead>
+      <tbody id="solicitudes-body">
+        <tr><td colspan="8" class="perfil-loading">Cargando solicitudes…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="perfil-notifications" id="perfil-notifications" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/perfil_instructor.js') }}" defer></script>
+{% endblock %}

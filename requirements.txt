@@ -5,3 +5,7 @@ ortools
 sqlalchemy
 psycopg2-binary
 pytest
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+jinja2

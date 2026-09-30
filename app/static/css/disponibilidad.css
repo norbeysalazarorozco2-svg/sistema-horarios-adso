@@ -1,0 +1,472 @@
+/* ============================================================
+   DISPONIBILIDAD.CSS — Matriz de Disponibilidad de Instructores
+   Sistema de Horarios ADSO — SENA
+   Rediseño "SENA Enterprise"
+   ============================================================ */
+
+/* ── Encabezado de la página ── */
+.dispon-header {
+  margin-bottom: var(--space-8);
+}
+
+.dispon-header__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  color: var(--slate-900);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: var(--space-2);
+}
+
+.dispon-header__subtitle {
+  font-size: var(--text-base);
+  color: var(--slate-500);
+  max-width: 60ch;
+}
+
+/* ── Panel de filtros (competencias y RAPs) ── */
+.dispon-filters {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 640px) {
+  .dispon-filters { grid-template-columns: 1fr; }
+}
+
+.dispon-filters__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--slate-700);
+  letter-spacing: 0.01em;
+  margin-bottom: var(--space-2);
+}
+
+.dispon-filters__label .req {
+  color: var(--red-600);
+}
+
+/* ── Contenedor de la grilla ── */
+.dispon-grid-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  overflow: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.dispon-grid-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--slate-900);
+  margin-bottom: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dispon-grid-title::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 22px;
+  background: linear-gradient(to bottom, var(--green-500), var(--green-700));
+  border-radius: var(--radius-full);
+}
+
+/* ── Grilla CSS Grid ── */
+.dispon-grid {
+  display: grid;
+  /* col-0 = etiqueta de jornada, col-1..6 = días Lun-Sáb */
+  grid-template-columns: 152px repeat(6, minmax(96px, 1fr));
+  gap: 6px;
+  min-width: 760px;
+}
+
+/* ── Celda de encabezado (días) ── */
+.dispon-grid__header-cell {
+  background: var(--slate-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--slate-600);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  user-select: none;
+}
+
+/* Celda vacía (esquina) — fija al scroll horizontal */
+.dispon-grid__corner {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: var(--color-surface);
+  border: none;
+}
+
+/* ── Etiqueta de jornada/bloque (columna izquierda fija) ── */
+.dispon-grid__row-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.row-label__jornada {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.row-label__jornada::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.row-label__jornada--mañana  { color: var(--amber-700); }
+.row-label__jornada--mañana::before  { background: var(--amber-500); }
+
+.row-label__jornada--tarde   { color: var(--blue-700); }
+.row-label__jornada--tarde::before   { background: var(--blue-600); }
+
+.row-label__jornada--noche   { color: var(--slate-600); }
+.row-label__jornada--noche::before   { background: var(--slate-400); }
+
+.row-label__horario {
+  font-size: var(--text-xs);
+  color: var(--slate-400);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ── Bloque de tiempo (celda interactiva) ── */
+.time-block {
+  position: relative;
+  min-height: 62px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background    var(--transition-fast),
+    border-color  var(--transition-fast),
+    box-shadow    var(--transition-fast),
+    transform     var(--transition-fast);
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.time-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 154, 68, 0.05), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.time-block:hover {
+  border-color: var(--green-400);
+  background: var(--green-50);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.time-block:hover::after { opacity: 1; }
+
+/* Ícono de check interno */
+.time-block__check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-size: 1.1rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+/* ── Estado: SELECCIONADO ── */
+.time-block.selected {
+  background: var(--green-100);
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 1px var(--green-600), var(--shadow-sm);
+}
+
+.time-block.selected::after {
+  background: linear-gradient(135deg, rgba(0, 154, 68, 0.12), transparent);
+  opacity: 1;
+}
+
+.time-block.selected .time-block__check {
+  opacity: 1;
+  color: var(--green-700);
+}
+
+.time-block.selected:hover {
+  background: var(--green-50);
+  border-color: var(--green-700);
+}
+
+/* ── Estado: DESHABILITADO ── */
+.time-block.disabled {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--slate-50),
+    var(--slate-50) 6px,
+    var(--slate-100) 6px,
+    var(--slate-100) 12px
+  );
+  border: 1px dashed var(--slate-300);
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.time-block.disabled:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--slate-300);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--slate-50),
+    var(--slate-50) 6px,
+    var(--slate-100) 6px,
+    var(--slate-100) 12px
+  );
+}
+
+.time-block.disabled::after { opacity: 0; }
+
+/* ── Separadores visuales entre jornadas ── */
+.dispon-grid__separator {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-2) 0;
+  border-radius: var(--radius-full);
+}
+
+/* ── Leyenda de estados ── */
+.dispon-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+.legend-swatch--libre {
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
+}
+
+.legend-swatch--seleccionado {
+  background: var(--green-100);
+  border-color: var(--green-600);
+}
+
+.legend-swatch--deshabilitado {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--slate-50),
+    var(--slate-50) 4px,
+    var(--slate-200) 4px,
+    var(--slate-200) 8px
+  );
+  border-color: var(--slate-300);
+}
+
+/* ── Panel de acciones ── */
+.dispon-actions {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.dispon-actions__info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dispon-actions__count {
+  min-width: 52px;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--green-700);
+  background: var(--green-50);
+  border: 1px solid var(--green-200);
+  border-radius: var(--radius-lg);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.dispon-actions__count-label {
+  font-size: var(--text-sm);
+  color: var(--slate-600);
+  font-weight: 500;
+}
+
+/* Pulso al guardar */
+.btn-primary.saving {
+  animation: save-pulse 1s ease infinite;
+}
+
+@keyframes save-pulse {
+  0%   { box-shadow: var(--shadow-sm), 0 0 0 0 rgba(0, 154, 68, 0.4); }
+  70%  { box-shadow: var(--shadow-sm), 0 0 0 14px rgba(0, 154, 68, 0); }
+  100% { box-shadow: var(--shadow-sm), 0 0 0 0 rgba(0, 154, 68, 0); }
+}
+
+/* ── Indicador vacío ── */
+.dispon-empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--slate-400);
+  font-size: var(--text-sm);
+}
+
+/* ── Zona de notificaciones / toast ── */
+.dispon-notifications {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  z-index: 500;
+  pointer-events: none;
+  max-width: 380px;
+  width: 100%;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--slate-400);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--slate-700);
+  pointer-events: auto;
+  animation: toast-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.toast.removing {
+  animation: toast-out 0.25s ease forwards;
+}
+
+.toast__icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+.toast strong { color: var(--slate-900); }
+
+.toast-success {
+  border-left-color: var(--green-500);
+  background: rgba(238, 250, 242, 0.97);
+}
+
+.toast-error {
+  border-left-color: var(--red-600);
+  background: rgba(254, 242, 242, 0.97);
+}
+
+.toast-info {
+  border-left-color: var(--blue-600);
+  background: rgba(239, 246, 255, 0.97);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(100%) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(60%) scale(0.95); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .dispon-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dispon-grid-wrapper { padding: var(--space-4); }
+
+  .dispon-notifications {
+    bottom: var(--space-4);
+    right: var(--space-4);
+    left: var(--space-4);
+    max-width: 100%;
+  }
+}

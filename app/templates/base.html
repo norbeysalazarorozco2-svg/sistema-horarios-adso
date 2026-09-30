@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{% block meta_description %}Sistema de gestión y agendamiento de horarios SENA — ADSO{% endblock %}" />
+  <title>{% block title %}Sistema de Horarios{% endblock %} · SENA ADSO</title>
+
+  <!-- Estilos base globales -->
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
+
+  <!-- Estilos específicos de la vista -->
+  {% block extra_styles %}{% endblock %}
+</head>
+<body>
+
+  {# ── Detección de página de autenticación (solo presentación) ── #}
+  {% set es_auth = request.url.path.startswith('/auth') %}
+  {% set sesion_activa = sesion_activa | default(false, true) %}
+  {% set rol_actual = rol | default('', true) %}
+  {% set es_gestora = rol_actual == 'gestora' %}
+  {% set es_instructor = rol_actual == 'instructor' %}
+
+  <!-- ── Barra de navegación ── -->
+  <header class="navbar" role="banner">
+    <div class="navbar__inner">
+      <a href="/" class="navbar__brand" aria-label="SENA Horarios — Inicio">
+        <span class="navbar__logo" aria-hidden="true">S</span>
+        <span class="navbar__brand-text">
+          <span class="navbar__brand-name">SENA <em>Horarios</em></span>
+          <span class="navbar__brand-sub">
+            {% if es_gestora %}Panel de la Gestora{% else %}Gestión de instructores{% endif %}
+          </span>
+        </span>
+      </a>
+
+      {% if not es_auth %}
+      {#
+        Las pestañas dependen del rol: la Gestora nunca ve la matriz de
+        disponibilidad ni el perfil del instructor, y viceversa.
+      #}
+      <nav class="navbar__nav" role="navigation" aria-label="Navegación principal">
+        <ul class="navbar__nav" role="list">
+          {% if es_gestora %}
+            <li>
+              <a href="/perfil-gestora#bandeja" id="nav-gestora-bandeja">
+                Bandeja de Solicitudes
+              </a>
+            </li>
+            <li>
+              <a href="/perfil-gestora#fichas" id="nav-gestora-fichas">
+                Fichas &amp; Trimestres
+              </a>
+            </li>
+            <li>
+              <a href="/perfil-gestora#horarios" id="nav-gestora-horarios">
+                Horarios
+              </a>
+            </li>
+            <li>
+              <a href="/perfil-gestora"
+                 class="{% if request.url.path == '/perfil-gestora' %}active{% endif %}"
+                 id="nav-perfil-gestora">
+                Perfil de la Gestora
+              </a>
+            </li>
+          {% else %}
+            <li>
+              <a href="/disponibilidad"
+                 class="{% if request.url.path == '/disponibilidad' %}active{% endif %}"
+                 id="nav-disponibilidad">
+                Disponibilidad
+              </a>
+            </li>
+            <li>
+              <a href="/perfil-instructor"
+                 class="{% if request.url.path == '/perfil-instructor' %}active{% endif %}"
+                 id="nav-perfil-instructor">
+                Perfil del instructor
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+
+      <div class="navbar__right">
+        {# ── Selector rápido de rol (simulación de inicio de sesión) ── #}
+        <form
+          class="role-switcher"
+          method="post"
+          action="/auth/simular-rol"
+          id="form-role-switcher"
+          title="Simulación de inicio de sesión por rol"
+        >
+          <label class="role-switcher__label" for="selector-rol">Simular rol</label>
+          <select
+            class="role-switcher__select"
+            id="selector-rol"
+            name="rol"
+            onchange="this.form.submit()"
+            aria-label="Simular inicio de sesión como rol"
+          >
+            <option value="" {% if not sesion_activa %}selected{% endif %}>— Sin sesión —</option>
+            <option value="instructor" {% if es_instructor %}selected{% endif %}>👨‍🏫 Instructor</option>
+            <option value="gestora" {% if es_gestora %}selected{% endif %}>👩‍💼 Gestora</option>
+          </select>
+          <noscript>
+            <button type="submit" class="btn btn-secondary btn-xs">Ir</button>
+          </noscript>
+        </form>
+
+        {% if sesion_activa %}
+        <span class="session-chip">
+          <span class="session-chip__dot" aria-hidden="true"></span>
+          {{ usuario_nombre or 'Sesión activa' }}
+        </span>
+        <form method="post" action="/auth/cerrar-sesion" class="role-switcher__salir">
+          <button type="submit" class="btn btn-ghost btn-xs" id="btn-cerrar-sesion">Salir</button>
+        </form>
+        {% else %}
+        <a href="/auth/login" class="btn btn-secondary" id="nav-login">Iniciar sesión</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- ── Contenido principal ── -->
+  {% block body %}
+  <main class="page-content" id="main-content">
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+  {% endblock %}
+
+  <!-- ── Pie de página ── -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer__inner">
+      <span class="footer__brand">
+        <span aria-hidden="true" class="dot">⬤</span> SENA — Sistema de Horarios ADSO
+      </span>
+      <span>© 2026 SENA · Todos los derechos reservados</span>
+    </div>
+  </footer>
+
+  <!-- Scripts específicos de la vista -->
+  {% block extra_scripts %}{% endblock %}
+
+  <script>
+    /* Navbar: simulación de rol y resalte de la sección activa. */
+    (function () {
+      'use strict';
+
+      const selector = document.getElementById('selector-rol');
+      if (selector) {
+        selector.addEventListener('change', () => selector.form.submit());
+      }
+
+      const enlaces = document.querySelectorAll('.navbar__nav a');
+      if (!enlaces.length) return;
+
+      const marcarActivo = () => {
+        const seccion = window.location.hash.replace('#', '');
+        enlaces.forEach((enlace) => {
+          const destino = enlace.getAttribute('href') || '';
+          const coincide = seccion
+            ? destino.endsWith(`#${seccion}`)
+            : destino === window.location.pathname;
+          enlace.classList.toggle('active', coincide);
+        });
+      };
+
+      marcarActivo();
+      window.addEventListener('hashchange', marcarActivo);
+    })();
+  </script>
+</body>
+</html>

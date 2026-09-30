@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil de la Gestora{% endblock %}
+{% block meta_description %}Bandeja de solicitudes, fichas por trimestre y horarios gestionados por la Gestora del SENA ADSO.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/perfil_gestora.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading gestora-heading">
+  <div>
+    <span class="page-heading__eyebrow">Perfil de la Gestora</span>
+    <div class="flex items-center gap-3 flex-wrap mb-4">
+      <span class="badge badge-accent">Gestora</span>
+      <span class="badge badge-primary" id="gestora-trimestre-badge">Trimestre —</span>
+      <span class="badge badge-nuevo hidden" id="gestora-vencidas-badge">Solicitudes vencidas</span>
+    </div>
+    <h1 class="page-heading__title" id="gestora-nombre">{{ gestora_nombre or 'Gestora' }}</h1>
+    <p class="page-heading__subtitle" id="gestora-correo">Coordinación de fichas, transversales y horarios.</p>
+  </div>
+  <div class="gestora-header-actions">
+    <div class="form-group">
+      <label class="form-label" for="selector-trimestre">Trimestre</label>
+      <select class="form-input" id="selector-trimestre">
+        {% for numero in range(1, 7) %}
+        <option value="{{ numero }}" {% if numero == trimestre_actual %}selected{% endif %}>
+          Trimestre {{ numero }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="button" class="btn btn-secondary" id="btn-actualizar">🔄 Actualizar</button>
+  </div>
+</header>
+
+<div class="alert alert-error mb-6" id="gestora-error" role="alert" hidden></div>
+
+<!-- ── Resumen operativo ── -->
+<section class="gestora-resumen" aria-label="Resumen de la gestión">
+  <div class="gestora-resumen__item">
+    <span class="gestora-resumen__label">Solicitudes abiertas</span>
+    <strong class="gestora-resumen__valor" id="resumen-abiertas">—</strong>
+  </div>
+  <div class="gestora-resumen__item">
+    <span class="gestora-resumen__label">Vencidas</span>
+    <strong class="gestora-resumen__valor gestora-resumen__valor--alerta" id="resumen-vencidas">—</strong>
+  </div>
+  <div class="gestora-resumen__item">
+    <span class="gestora-resumen__label">Fichas del trimestre</span>
+    <strong class="gestora-resumen__valor" id="resumen-fichas">—</strong>
+  </div>
+  <div class="gestora-resumen__item">
+    <span class="gestora-resumen__label">Horas asignadas</span>
+    <strong class="gestora-resumen__valor" id="resumen-horas">—</strong>
+  </div>
+</section>
+
+<!-- ── 1. Bandeja de solicitudes ── -->
+<section class="card mb-8" id="bandeja" aria-labelledby="bandeja-heading">
+  <div class="gestora-section-heading">
+    <div>
+      <h2 class="card__title" id="bandeja-heading">Bandeja de Solicitudes</h2>
+      <p class="card__subtitle" id="bandeja-subtitle">Solicitudes de asignaturas transversales enviadas por los instructores.</p>
+    </div>
+    <div class="gestora-filtros" role="group" aria-label="Filtrar solicitudes por estado">
+      <button type="button" class="chip chip--activo" data-estado="" id="filtro-todas">Todas</button>
+      <button type="button" class="chip" data-estado="Pendiente">Pendientes</button>
+      <button type="button" class="chip" data-estado="En revisión">En revisión</button>
+      <button type="button" class="chip" data-estado="Aprobado">Aprobadas</button>
+      <button type="button" class="chip" data-estado="Rechazado">Rechazadas</button>
+    </div>
+  </div>
+
+  <div class="gestora-empty hidden" id="bandeja-mensaje" role="status">
+    <strong>No hay solicitudes en este estado.</strong>
+    <p>Cuando un instructor solicite transversales aparecerá aquí para su coordinación.</p>
+  </div>
+
+  <div class="gestora-table-wrap" id="bandeja-tabla-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Instructor</th>
+          <th scope="col">Ficha</th>
+          <th scope="col">Transversales</th>
+          <th scope="col">Sugerencias</th>
+          <th scope="col">Fecha límite</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Resolver</th>
+        </tr>
+      </thead>
+      <tbody id="bandeja-body">
+        <tr><td colspan="7" class="gestora-loading">Cargando solicitudes…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── 2. Fichas & Trimestres ── -->
+<section class="card mb-8" id="fichas" aria-labelledby="fichas-gestora-heading">
+  <div class="gestora-section-heading">
+    <div>
+      <h2 class="card__title" id="fichas-gestora-heading">Fichas &amp; Trimestres</h2>
+      <p class="card__subtitle" id="fichas-gestora-subtitle">Fichas del programa con su carga asignada.</p>
+    </div>
+  </div>
+
+  <div class="gestora-empty hidden" id="fichas-gestora-mensaje" role="status">
+    <strong>No hay fichas registradas en este trimestre.</strong>
+    <p>Las fichas se habilitan aquí a medida que la matrícula de cada trimestre se cierre.</p>
+  </div>
+
+  <div class="gestora-table-wrap" id="fichas-gestora-tabla-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Ficha</th>
+          <th scope="col">Programa</th>
+          <th scope="col">Jornada</th>
+          <th scope="col">Trimestre</th>
+          <th scope="col">Instructores</th>
+          <th scope="col">Horas</th>
+          <th scope="col">Competencias</th>
+          <th scope="col">Transversales</th>
+          <th scope="col">Estado</th>
+        </tr>
+      </thead>
+      <tbody id="fichas-gestora-body">
+        <tr><td colspan="9" class="gestora-loading">Cargando fichas…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── 3. Horarios ── -->
+<section class="card" id="horarios" aria-labelledby="horarios-heading">
+  <div class="gestora-section-heading">
+    <div>
+      <h2 class="card__title" id="horarios-heading">Horarios</h2>
+      <p class="card__subtitle" id="horarios-subtitle">Mapa de clases asignadas por bloque horario.</p>
+    </div>
+    <div class="gestora-filtros" role="group" aria-label="Filtrar horarios por jornada">
+      <button type="button" class="chip chip--activo" data-jornada="todas">Todas</button>
+      <button type="button" class="chip" data-jornada="Mañana">Mañana</button>
+      <button type="button" class="chip" data-jornada="Tarde">Tarde</button>
+      <button type="button" class="chip" data-jornada="Noche">Noche</button>
+    </div>
+  </div>
+
+  <div class="gestora-grid-wrapper">
+    <div class="gestora-grid" role="grid" aria-label="Horario del trimestre" id="gestora-grid">
+      <p class="gestora-loading">Cargando horarios…</p>
+    </div>
+
+    <div class="gestora-leyenda" role="note" aria-label="Leyenda del horario">
+      <div class="leyenda-item">
+        <span class="leyenda-swatch leyenda-swatch--materia" aria-hidden="true"></span>
+        Materia
+      </div>
+      <div class="leyenda-item">
+        <span class="leyenda-swatch leyenda-swatch--transversal" aria-hidden="true"></span>
+        Transversal
+      </div>
+      <div class="leyenda-item">
+        <span class="leyenda-swatch leyenda-swatch--libre" aria-hidden="true"></span>
+        Bloque libre
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="gestora-notifications" id="gestora-notifications" role="status" aria-live="polite"></div>
+
+<!-- ── Formulario de resolución (se rellena desde la bandeja) ── -->
+<div class="gestora-modal hidden" id="gestora-modal" role="dialog" aria-modal="true" aria-labelledby="gestora-modal-heading">
+  <div class="gestora-modal__panel">
+    <h3 class="card__title" id="gestora-modal-heading">Resolver solicitud</h3>
+    <p class="card__subtitle" id="gestora-modal-subtitle"></p>
+
+    <form id="form-resolver" novalidate>
+      <input type="hidden" id="resolver-solicitud-id" name="solicitud_id" />
+
+      <div class="form-group mb-4">
+        <label class="form-label" for="resolver-estado">Estado de la solicitud</label>
+        <select class="form-input" id="resolver-estado" name="estado" required>
+          <option value="Pendiente">Pendiente</option>
+          <option value="En revisión">En revisión</option>
+          <option value="Aprobado">Aprobado</option>
+          <option value="Rechazado">Rechazado</option>
+        </select>
+      </div>
+
+      <div class="gestora-modal__campos">
+        <div class="form-group">
+          <label class="form-label" for="resolver-horas">Horas asignadas (opcional)</label>
+          <input
+            class="form-input"
+            id="resolver-horas"
+            name="horas_asignadas"
+            type="number"
+            min="0"
+            max="40"
+            step="0.5"
+            placeholder="Ej. 2"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="resolver-bloque">Bloque confirmado (opcional)</label>
+          <input
+            class="form-input"
+            id="resolver-bloque"
+            name="bloque_asignado"
+            type="text"
+            maxlength="120"
+            placeholder="Ej. Martes 06:00–09:00"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="resolver-comentario">Comentario para el instructor</label>
+        <textarea
+          class="form-input gestora-comentarios"
+          id="resolver-comentario"
+          name="comentario"
+          maxlength="300"
+          placeholder="Obligatorio al aprobar o rechazar la solicitud"
+        ></textarea>
+      </div>
+
+      <div class="gestora-modal__acciones">
+        <button type="button" class="btn btn-secondary" id="btn-cancelar-resolver">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btn-guardar-resolver">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/perfil_gestora.js') }}" defer></script>
+{% endblock %}
