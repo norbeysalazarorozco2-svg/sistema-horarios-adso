@@ -1,0 +1,276 @@
+{#
+  UI.HTML — Componentes base de SIPA (macros Jinja2)
+  Uso:  {% import "components/ui.html" as ui %}
+
+  Principio: "El instructor declara, el sistema programa y la
+  gestora decide solo lo que el sistema no puede resolver."
+  Ningún estado se comunica solo con color: siempre ícono + texto.
+#}
+
+{# ── Ícono del sprite (components/iconos.html) ─────────────── #}
+{% macro icono(nombre, clase='') -%}
+<svg class="sipa-icono {{ clase }}" aria-hidden="true" focusable="false"><use href="#i-{{ nombre }}"></use></svg>
+{%- endmacro %}
+
+{# ── Marca de autoría: quién actúa sobre la información ────── #}
+{% set _AUTORIAS = {
+  'declaras': ('declarar',  'Tú declaras'),
+  'sistema':  ('engranaje', 'Generado por SIPA'),
+  'gestora':  ('balanza',   'Decide la gestora'),
+} %}
+{% macro autoria(tipo) -%}
+{% set a = _AUTORIAS[tipo] %}
+<span class="sipa-autoria sipa-autoria--{{ tipo }}">{{ icono(a[0]) }}{{ a[1] }}</span>
+{%- endmacro %}
+
+{# ── Badge de estado ───────────────────────────────────────── #}
+{% set _ESTADOS = {
+  'pendiente':   ('reloj',            'Pendiente'),
+  'completo':    ('check-circulo',    'Completo'),
+  'en-proceso':  ('flechas',          'En proceso'),
+  'generado':    ('engranaje',        'Generado'),
+  'publicado':   ('calendario-check', 'Publicado'),
+  'bloqueado':   ('candado',          'Bloqueado'),
+  'alerta':      ('triangulo',        'Alerta'),
+  'hueco':       ('hueco',            'Hueco'),
+  'resuelto':    ('check-doble',      'Resuelto'),
+  'por-definir': ('info',             'Por definir'),
+} %}
+{% macro badge(estado, texto=None) -%}
+{% set e = _ESTADOS[estado] %}
+<span class="sipa-badge sipa-badge--{{ estado }}">{{ icono(e[0]) }}{{ texto or e[1] }}</span>
+{%- endmacro %}
+
+{# ── Botón / enlace con aspecto de botón ───────────────────────
+   variante: primario | secundario | terciario
+   bloqueado: texto del motivo (se muestra, no solo se atenúa)
+   por_definir: código de la pregunta pendiente, p. ej. 'Q33'   #}
+{% macro boton(texto, variante='primario', href=None, icono_nombre=None, tipo='button',
+               id=None, pequeno=False, completo=False, bloqueado=None, por_definir=None) -%}
+{% set clases = 'sipa-btn sipa-btn--' ~ variante
+     ~ (' sipa-btn--pequeno' if pequeno else '')
+     ~ (' sipa-btn--completo' if completo else '') %}
+{% if por_definir %}
+<button type="button" class="sipa-btn sipa-btn--por-definir{{ ' sipa-btn--pequeno' if pequeno }}" disabled {% if id %}id="{{ id }}"{% endif %}>
+  {{ icono('info') }}{{ texto }}<span class="sipa-sr-only">:</span> <span>· Por definir ({{ por_definir }})</span>
+</button>
+{% elif bloqueado %}
+<span class="sipa-btn-bloqueado">
+  <button type="button" class="{{ clases }} sipa-btn--bloqueado" disabled
+          {% if id %}id="{{ id }}" aria-describedby="{{ id }}-motivo"{% endif %}>
+    {{ icono('candado') }}{{ texto }}{% if not id %}<span class="sipa-sr-only">. {{ bloqueado }}</span>{% endif %}
+  </button>
+  <span class="sipa-btn__motivo" {% if id %}id="{{ id }}-motivo"{% endif %}>{{ bloqueado }}</span>
+</span>
+{% elif href %}
+<a class="{{ clases }}" href="{{ href }}" {% if id %}id="{{ id }}"{% endif %}>{% if icono_nombre %}{{ icono(icono_nombre) }}{% endif %}{{ texto }}</a>
+{% else %}
+<button type="{{ tipo }}" class="{{ clases }}" {% if id %}id="{{ id }}"{% endif %}>{% if icono_nombre %}{{ icono(icono_nombre) }}{% endif %}{{ texto }}</button>
+{% endif %}
+{%- endmacro %}
+
+{# ── Tarjeta (contenido vía {% call %}) ─────────────────────── #}
+{% macro tarjeta(titulo=None, autoria_tipo=None, subtitulo=None, variante=None, nivel=2, id=None) -%}
+<section class="sipa-tarjeta{% if variante %} sipa-tarjeta--{{ variante }}{% endif %}"
+         {% if id %}id="{{ id }}"{% endif %}
+         {% if titulo and id %}aria-labelledby="{{ id }}-titulo"{% endif %}>
+  {% if autoria_tipo or titulo or subtitulo %}
+  <header class="sipa-tarjeta__cabecera">
+    {% if autoria_tipo %}{{ autoria(autoria_tipo) }}{% endif %}
+    {% if titulo %}<h{{ nivel }} class="sipa-tarjeta__titulo" {% if id %}id="{{ id }}-titulo"{% endif %}>{{ titulo }}</h{{ nivel }}>{% endif %}
+    {% if subtitulo %}<p class="sipa-tarjeta__subtitulo">{{ subtitulo }}</p>{% endif %}
+  </header>
+  {% endif %}
+  {{ caller() }}
+</section>
+{%- endmacro %}
+
+{# ── KPI ───────────────────────────────────────────────────────
+   variante: hueco | solicitud | alerta | neutro               #}
+{% macro kpi(etiqueta, valor, icono_nombre, variante='neutro', href=None) -%}
+{% set etiqueta_tag = 'a' if href else 'div' %}
+<{{ etiqueta_tag }} class="sipa-kpi sipa-kpi--{{ variante }}" {% if href %}href="{{ href }}"{% endif %}>
+  <span class="sipa-kpi__cabecera">{{ icono(icono_nombre) }}{{ etiqueta }}</span>
+  <span class="sipa-kpi__valor">{{ valor }}</span>
+</{{ etiqueta_tag }}>
+{%- endmacro %}
+
+{# ── Alerta ────────────────────────────────────────────────────
+   tipo: hueco | solicitud | sobrecarga | plazo | exito | error #}
+{% set _ALERTAS = {
+  'hueco': 'hueco', 'solicitud': 'sobre', 'sobrecarga': 'balanza',
+  'plazo': 'reloj-arena', 'exito': 'check-circulo', 'error': 'triangulo',
+} %}
+{% macro alerta(tipo, titulo, texto=None, accion_texto=None, accion_href=None) -%}
+<div class="sipa-alerta sipa-alerta--{{ tipo }}" {% if tipo == 'error' %}role="alert"{% endif %}>
+  {{ icono(_ALERTAS[tipo]) }}
+  <div class="sipa-alerta__cuerpo">
+    <p class="sipa-alerta__titulo">{{ titulo }}</p>
+    {% if texto %}<p class="sipa-alerta__texto">{{ texto }}</p>{% endif %}
+  </div>
+  {% if accion_texto and accion_href %}
+  <span class="sipa-alerta__accion">{{ boton(accion_texto, 'primario', href=accion_href, pequeno=True) }}</span>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{# ── Tabla (filas vía {% call %}) ───────────────────────────────
+   columnas: lista de textos o de dicts {'texto':…, 'num':True}.
+   En móvil, con apilable=True cada fila se vuelve tarjeta; las
+   celdas deben llevar data-etiqueta (ver macro celda).          #}
+{% macro tabla(columnas, caption=None, apilable=True, id=None) -%}
+<div class="sipa-tabla-contenedor">
+  <table class="sipa-tabla{% if apilable %} sipa-tabla--apilable{% endif %}" {% if id %}id="{{ id }}"{% endif %}>
+    {% if caption %}<caption>{{ caption }}</caption>{% endif %}
+    <thead>
+      <tr>
+        {% for col in columnas %}
+        {% if col is mapping %}
+        <th scope="col" {% if col.num %}class="sipa-num"{% endif %}>{{ col.texto }}</th>
+        {% else %}
+        <th scope="col">{{ col }}</th>
+        {% endif %}
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {{ caller() }}
+    </tbody>
+  </table>
+</div>
+{%- endmacro %}
+
+{% macro celda(etiqueta, valor, num=False) -%}
+<td data-etiqueta="{{ etiqueta }}" {% if num %}class="sipa-num"{% endif %}>{{ valor }}</td>
+{%- endmacro %}
+
+{# ── Estado vacío (motivo de cuadrícula horaria) ────────────── #}
+{% macro vacio(titulo, texto=None, icono_nombre='horario') -%}
+<div class="sipa-vacio">
+  {{ icono(icono_nombre, 'sipa-icono--lg') }}
+  <p class="sipa-vacio__titulo">{{ titulo }}</p>
+  {% if texto %}<p>{{ texto }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{# ── Zona "Por definir" (decisión pendiente de validación) ──── #}
+{% macro por_definir(texto, pregunta) -%}
+<div class="sipa-por-definir">
+  {{ icono('info') }}
+  <span>{{ texto }} · <span class="sipa-por-definir__q">Por definir ({{ pregunta }})</span></span>
+</div>
+{%- endmacro %}
+
+{# ── Toast / mensaje de confirmación ───────────────────────────
+   Se renderiza dentro del contenedor #sipa-toasts del layout.
+   tipo: exito | info | error                                    #}
+{% set _TOASTS = {'exito': 'check-circulo', 'info': 'info', 'error': 'triangulo'} %}
+{% macro toast(texto, tipo='exito') -%}
+<div class="sipa-toast sipa-toast--{{ tipo }}" {% if tipo == 'error' %}role="alert"{% else %}role="status"{% endif %} data-sipa-toast>
+  {{ icono(_TOASTS[tipo]) }}
+  <p class="sipa-toast__texto">{{ texto }}</p>
+  <button type="button" class="sipa-toast__cerrar" data-sipa-toast-cerrar aria-label="Cerrar mensaje">{{ icono('cerrar', 'sipa-icono--sm') }}</button>
+</div>
+{%- endmacro %}
+
+{# ── Cinta de fases del trimestre ──────────────────────────────
+   La fase Publicación queda punteada mientras siga pendiente (Q4). #}
+{% set _FASES = [
+  ('actualizacion', 'Actualización', False),
+  ('solicitudes',   'Solicitudes',   False),
+  ('generacion',    'Generación',    False),
+  ('publicacion',   'Publicación',   True),
+] %}
+{% macro fases(fase_actual=None) -%}
+{% set ns = namespace(antes=True, nombre_actual=None) %}
+{% for clave, nombre, _ in _FASES %}{% if clave == fase_actual %}{% set ns.nombre_actual = nombre %}{% endif %}{% endfor %}
+<ol class="sipa-fases" aria-label="Fases del trimestre">
+  {% for clave, nombre, por_definir in _FASES %}
+    {% set es_actual = (clave == fase_actual) %}
+    {% if es_actual %}{% set ns.antes = False %}{% endif %}
+    {% set estado = 'actual' if es_actual else ('hecha' if (ns.antes and fase_actual) else 'pendiente') %}
+    <li class="sipa-fases__paso sipa-fases__paso--{{ estado }}{% if por_definir and not es_actual %} sipa-fases__paso--por-definir{% endif %}"
+        {% if es_actual %}aria-current="step"{% endif %}>
+      <span class="sipa-fases__punto" aria-hidden="true"></span>{{ nombre }}{% if por_definir and not es_actual %}<span class="sipa-sr-only"> (por definir, Q4)</span>{% endif %}
+    </li>
+  {% endfor %}
+</ol>
+<span class="sipa-fases__chip">Fase: {{ ns.nombre_actual or '—' }}</span>
+{%- endmacro %}
+
+{# ── Header institucional ──────────────────────────────────── #}
+{% macro header(usuario_nombre='', rol_texto='', trimestre=None, fase_actual=None) -%}
+{% set partes = (usuario_nombre or '').split() %}
+{% set iniciales = (partes[0][0] if partes else '') ~ (partes[1][0] if partes|length > 1 else '') %}
+<header class="sipa-header sipa-app__header">
+  <a class="sipa-marca" href="/" aria-label="SIPA, inicio">
+    {# Espacio para el logo oficial SENA — uso PENDIENTE del Manual de Identidad. #}
+    <span class="sipa-marca__logo" aria-hidden="true">SENA</span>
+    <span class="sipa-marca__nombre">SIPA</span>
+  </a>
+  <div class="sipa-header__contexto">
+    <span class="sipa-header__trimestre">Trimestre {{ trimestre if trimestre else '—' }}</span>
+    {{ fases(fase_actual) }}
+  </div>
+  {% if usuario_nombre %}
+  <div class="sipa-header__usuario">
+    <span class="sipa-avatar" aria-hidden="true">{{ iniciales | upper }}</span>
+    <span class="sipa-header__nombre">{{ usuario_nombre }}<span class="sipa-header__rol">{{ rol_texto }}</span></span>
+    <form class="sipa-header__salir" method="post" action="/auth/cerrar-sesion">
+      <button type="submit" class="sipa-btn sipa-btn--terciario" aria-label="Salir">{{ icono('salir') }}</button>
+    </form>
+  </div>
+  {% endif %}
+</header>
+{%- endmacro %}
+
+{# ── Sidebar por rol ───────────────────────────────────────────
+   rol: 'instructor' | 'gestora'. El líder de ficha NO es un rol:
+   es un instructor con es_lider=True, que ve además "Mi ficha".
+   rutas: dict clave → URL. Una clave sin ruta se muestra inactiva
+   (pantalla aún no implementada); "Publicación" queda Por definir. #}
+{% macro sidebar(rol, activo=None, es_lider=False, rutas={}) -%}
+{% if rol == 'gestora' %}
+  {% set items = [
+    ('panel',       'Panel',       'balanza',          None),
+    ('bandeja',     'Bandeja',     'sobre',            None),
+    ('fichas',      'Fichas',      'grupo',            None),
+    ('generacion',  'Generación',  'engranaje',        None),
+    ('resultado',   'Resultado',   'horario',          None),
+    ('publicacion', 'Publicación', 'calendario-check', 'Q4'),
+  ] %}
+{% else %}
+  {% set items = [
+    ('inicio',     'Inicio',     'inicio',   None),
+    ('mis-datos',  'Mis datos',  'declarar', None),
+    ('mi-horario', 'Mi horario', 'horario',  None),
+  ] + ([('mi-ficha', 'Mi ficha', 'grupo', None)] if es_lider else []) %}
+{% endif %}
+<nav class="sipa-sidebar sipa-app__sidebar" aria-label="Navegación principal">
+  <ul class="sipa-sidebar__lista">
+    {% for clave, texto, icono_nombre, pregunta in items %}
+    <li>
+      {% if pregunta %}
+      <span class="sipa-sidebar__item sipa-sidebar__item--inactivo sipa-sidebar__item--por-definir" aria-disabled="true">
+        {{ icono(icono_nombre) }}<span class="sipa-sidebar__texto">{{ texto }}</span><span class="sipa-sidebar__nota">Por definir</span>
+      </span>
+      {% elif rutas.get(clave) %}
+      <a class="sipa-sidebar__item" href="{{ rutas[clave] }}" {% if clave == activo %}aria-current="page"{% endif %}>
+        {{ icono(icono_nombre) }}<span class="sipa-sidebar__texto">{{ texto }}</span>
+      </a>
+      {% else %}
+      <span class="sipa-sidebar__item sipa-sidebar__item--inactivo" aria-disabled="true"
+            {% if clave == activo %}aria-current="page"{% endif %} title="Pantalla aún no disponible">
+        {{ icono(icono_nombre) }}<span class="sipa-sidebar__texto">{{ texto }}</span>
+      </span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="sipa-sidebar__pie">
+    <form method="post" action="/auth/cerrar-sesion">
+      <button type="submit" class="sipa-sidebar__item">{{ icono('salir') }}<span class="sipa-sidebar__texto">Salir</span></button>
+    </form>
+  </div>
+</nav>
+{%- endmacro %}

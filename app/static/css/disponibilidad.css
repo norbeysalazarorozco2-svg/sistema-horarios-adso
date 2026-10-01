@@ -189,7 +189,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(0, 154, 68, 0.05), transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--sena-verde) 5%, transparent), transparent);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
@@ -225,7 +225,7 @@
 }
 
 .time-block.selected::after {
-  background: linear-gradient(135deg, rgba(0, 154, 68, 0.12), transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--sena-verde) 12%, transparent), transparent);
   opacity: 1;
 }
 
@@ -376,9 +376,9 @@
 }
 
 @keyframes save-pulse {
-  0%   { box-shadow: var(--shadow-sm), 0 0 0 0 rgba(0, 154, 68, 0.4); }
-  70%  { box-shadow: var(--shadow-sm), 0 0 0 14px rgba(0, 154, 68, 0); }
-  100% { box-shadow: var(--shadow-sm), 0 0 0 0 rgba(0, 154, 68, 0); }
+  0%   { box-shadow: var(--shadow-sm), 0 0 0 0 color-mix(in srgb, var(--sena-verde) 40%, transparent); }
+  70%  { box-shadow: var(--shadow-sm), 0 0 0 14px transparent; }
+  100% { box-shadow: var(--shadow-sm), 0 0 0 0 transparent; }
 }
 
 /* ── Indicador vacío ── */

@@ -66,6 +66,11 @@
         </p>
       </div>
 
+      {# ── HERRAMIENTAS DE DESARROLLO: no forman parte de SIPA ── #}
+      {% if modo_desarrollo %}
+      <div class="dev-tools">
+      <span class="dev-tools__etiqueta">Herramientas de desarrollo — no forman parte de SIPA</span>
+
       <!-- ── Selector rápido de rol para pruebas ── -->
       <div class="demo-accounts">
         <p class="demo-accounts__title">🧪 Simulación de inicio de sesión</p>
@@ -95,6 +100,8 @@
         <div class="demo-accounts__item">👩‍💼 Gestora:&nbsp;&nbsp;&nbsp; <strong>mgestora@sena.edu.co</strong> / Clave123!</div>
         <div class="demo-accounts__item">👨‍🏫 Nuevo:&nbsp;&nbsp;&nbsp;&nbsp; <strong>instructor.nuevo@sena.edu.co</strong> / Clave123!</div>
       </div>
+      </div>
+      {% endif %}
 
     </div>
   </section>

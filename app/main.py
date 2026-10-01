@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
+import os
 
 from app.api.auth import router as auth_router
 from app.api.catalogo import router as catalogo_router
@@ -57,6 +58,12 @@ def _url_for(name: str, **path_params) -> str:
     return str(app.url_path_for(name, **path_params))
 
 templates.env.globals["url_for"] = _url_for
+
+# ── Modo desarrollo ───────────────────────────────────────────────────────────
+# Las herramientas de desarrollo (simular rol, cuentas demo, modo de prueba,
+# catálogo de componentes) no forman parte de la interfaz de producción.
+MODO_DESARROLLO = os.getenv("APP_ENV", "development").lower() != "production"
+templates.env.globals["modo_desarrollo"] = MODO_DESARROLLO
 
 # ── Routers de la API ─────────────────────────────────────────────────────────
 app.include_router(auth_router)
@@ -160,7 +167,9 @@ async def vista_login(request: Request, error: str | None = None):
                     "rol": str(getattr(usuario["rol"], "value", usuario["rol"])),
                 }
                 for usuario in USUARIOS_MOCK
-            ],
+            ]
+            if MODO_DESARROLLO
+            else [],
         },
     )
 
@@ -203,7 +212,12 @@ async def simular_rol(request: Request):
 
       - `instructor` → /disponibilidad  (y /perfil-instructor)
       - `gestora`    → /perfil-gestora
+
+    Herramienta de desarrollo: no existe en producción.
     """
+    if not MODO_DESARROLLO:
+        raise HTTPException(status_code=404)
+
     from app.api.auth import USUARIOS_MOCK
 
     form = await request.form()
@@ -377,3 +391,26 @@ async def vista_perfil_gestora(request: Request):
         },
     )
 
+
+# ── Herramientas de desarrollo ───────────────────────────────────────────────
+
+if MODO_DESARROLLO:
+
+    @app.get("/_dev/componentes", response_class=HTMLResponse, include_in_schema=False)
+    async def catalogo_componentes(request: Request, rol: str = "instructor", fase: str | None = None):
+        """Catálogo del sistema visual SIPA con datos de ejemplo (solo desarrollo)."""
+        rol_vista = rol if rol in {"instructor", "lider", "gestora"} else "instructor"
+        return templates.TemplateResponse(
+            request,
+            "dev/componentes.html",
+            context={
+                **contexto_sesion(request),
+                "rol": ROL_GESTORA if rol_vista == "gestora" else ROL_INSTRUCTOR,
+                "es_lider_ficha": rol_vista == "lider",
+                "rol_vista": rol_vista,
+                "usuario_nombre": "Usuario de ejemplo",
+                "trimestre": 3,
+                "fase_actual": fase if fase in {"actualizacion", "solicitudes", "generacion"} else "solicitudes",
+                "nav_activo": "panel" if rol_vista == "gestora" else "inicio",
+            },
+        )

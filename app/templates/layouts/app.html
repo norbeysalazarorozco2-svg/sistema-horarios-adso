@@ -1,0 +1,55 @@
+{#
+  LAYOUT DE LA APLICACIÓN SIPA (pantallas internas)
+  Header institucional + sidebar por rol + contenido.
+
+  Variables que usa (todas opcionales):
+    rol             'instructor' | 'gestora'   (de contexto_sesion)
+    es_lider_ficha  bool — el líder es un instructor con "Mi ficha"
+    usuario_nombre  nombre para el header     (de contexto_sesion)
+    trimestre       número del trimestre activo
+    fase_actual     'actualizacion' | 'solicitudes' | 'generacion' | 'publicacion'
+    nav_activo      clave del ítem activo del sidebar
+    rutas_sipa      dict clave → URL de las pantallas ya implementadas
+
+  Bloques: title, contenido, toasts, extra_styles, extra_scripts.
+  Las vistas del prototipo siguen usando base.html.
+#}
+{% import "components/ui.html" as ui %}
+{% set _rol = (rol | default('', true)) %}
+{% set _es_lider = es_lider_ficha | default(false, true) %}
+{% set _rol_texto = 'Gestora' if _rol == 'gestora' else ('Instructor · Líder de ficha' if _es_lider else 'Instructor') %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SIPA{% endblock %} · SIPA · SENA ADSO</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/tokens.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/sipa.css') }}" />
+  {% if modo_desarrollo %}
+  <link rel="stylesheet" href="{{ url_for('static', path='css/dev-tools.css') }}" />
+  {% endif %}
+  {% block extra_styles %}{% endblock %}
+</head>
+<body class="sipa-body">
+  <a class="sipa-saltar" href="#contenido">Saltar al contenido</a>
+  {% include "components/iconos.html" %}
+
+  <div class="sipa-app">
+    {{ ui.header(usuario_nombre | default('', true), _rol_texto, trimestre | default(none, true), fase_actual | default(none, true)) }}
+    {{ ui.sidebar(_rol, nav_activo | default(none, true), _es_lider, rutas_sipa | default({}, true)) }}
+
+    <main class="sipa-app__main" id="contenido" tabindex="-1">
+      {% block contenido %}{% endblock %}
+    </main>
+  </div>
+
+  <div class="sipa-toasts" id="sipa-toasts" aria-live="polite">
+    {% block toasts %}{% endblock %}
+  </div>
+
+  <script src="{{ url_for('static', path='js/sipa.js') }}" defer></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

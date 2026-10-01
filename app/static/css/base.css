@@ -1,120 +1,13 @@
 /* ============================================================
    BASE.CSS — Sistema de diseño "SENA Enterprise"
    Sistema de Horarios ADSO — SENA
-   Tema claro · Verde institucional SENA (Pantone 355C #009A44)
+   Tema claro · Tokens en tokens.css (fuente única)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
-
-/* ═══════════════════════════════════════════════════════════
-   TOKENS DE DISEÑO
-   ═══════════════════════════════════════════════════════════ */
-:root {
-  /* ── Verde institucional SENA ── */
-  --green-50:  #eefaf2;
-  --green-100: #d5f3e2;
-  --green-200: #ace6c5;
-  --green-300: #7ad4a3;
-  --green-400: #47bc80;
-  --green-500: #21a25f;
-  --green-600: #009a44;   /* Marca SENA */
-  --green-700: #0a7d39;
-  --green-800: #0b6332;
-  --green-900: #0a4a27;
-
-  /* ── Grises neutros (slate) ── */
-  --slate-50:  #f8fafc;
-  --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
-  --slate-500: #64748b;
-  --slate-600: #475569;
-  --slate-700: #334155;
-  --slate-800: #1e293b;
-  --slate-900: #0f172a;
-
-  /* ── Secundarios (solo estados y acciones) ── */
-  --blue-50:  #eff6ff;
-  --blue-100: #dbeafe;
-  --blue-600: #2563eb;
-  --blue-700: #1d4ed8;
-
-  --amber-50:  #fffbeb;
-  --amber-100: #fef3c7;
-  --amber-600: #d97706;
-  --amber-700: #b45309;
-
-  --red-50:  #fef2f2;
-  --red-100: #fee2e2;
-  --red-600: #dc2626;
-  --red-700: #b91c1c;
-
-  /* ── Superficies ── */
-  --color-bg:           #f4f6f9;
-  --color-surface:      #ffffff;
-  --color-surface-2:    #f8fafc;
-  --color-border:       #e2e8f0;
-  --color-border-hover: #cbd5e1;
-
-  /* ── Compatibilidad con tokens legados ── */
-  --color-primary:      var(--green-600);
-  --color-primary-dim:  var(--green-700);
-  --color-primary-glow: rgba(0, 154, 68, 0.12);
-  --color-primary-text: var(--green-700);
-  --color-accent:       var(--blue-600);
-  --color-accent-dim:   var(--blue-700);
-  --color-warning:      var(--amber-600);
-  --color-danger:       var(--red-600);
-  --color-success:      var(--green-600);
-
-  /* ── Tipografía ── */
-  --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
-
-  --text-xs:   0.75rem;
-  --text-sm:   0.875rem;
-  --text-base: 1rem;
-  --text-lg:   1.125rem;
-  --text-xl:   1.25rem;
-  --text-2xl:  1.5rem;
-  --text-3xl:  1.875rem;
-  --text-4xl:  2.25rem;
-
-  /* ── Espaciado ── */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-
-  /* ── Radios ── */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
-  --radius-xl:  18px;
-  --radius-full: 9999px;
-
-  /* ── Sombras (empresariales, en capas) ── */
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 2px 4px -1px rgba(16, 24, 40, 0.06), 0 6px 12px -4px rgba(16, 24, 40, 0.10);
-  --shadow-lg: 0 8px 24px -6px rgba(16, 24, 40, 0.12), 0 16px 32px -12px rgba(16, 24, 40, 0.10);
-  --shadow-glow: 0 4px 16px rgba(0, 154, 68, 0.22);
-
-  /* ── Focus rings ── */
-  --ring-green: rgba(0, 154, 68, 0.25);
-  --ring-blue:  rgba(37, 99, 235, 0.25);
-
-  /* ── Transiciones ── */
-  --transition-fast:   150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow:   400ms ease;
-}
+/* Los tokens (colores, tipografía, espaciado, radios, sombras,
+   estados) viven en tokens.css, que debe cargarse antes que
+   este archivo. Las herramientas de desarrollo (cuentas demo,
+   simulación de rol) tienen sus estilos en dev-tools.css. */
 
 /* ═══════════════════════════════════════════════════════════
    RESET
@@ -359,49 +252,6 @@ strong { font-weight: 600; }
   border-radius: 50%;
   background: var(--green-500);
   box-shadow: 0 0 0 3px var(--green-100);
-}
-
-/* Selector rápido de rol (simulación de inicio de sesión) */
-.role-switcher {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.role-switcher__label {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--slate-500);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-}
-
-.role-switcher__select {
-  padding: var(--space-2) var(--space-8) var(--space-2) var(--space-3);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--slate-700);
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right var(--space-2) center;
-  white-space: nowrap;
-}
-
-.role-switcher__select:hover {
-  border-color: var(--color-border-hover);
-}
-
-.role-switcher__select:focus {
-  outline: none;
-  border-color: var(--green-500);
-  box-shadow: 0 0 0 3px var(--ring-green);
 }
 
 .role-switcher__salir {
@@ -839,63 +689,6 @@ input[type="checkbox"] {
 
 .auth-footer-link a:hover { color: var(--green-600); }
 
-.demo-accounts {
-  margin-top: var(--space-6);
-  background: var(--slate-50);
-  border: 1px dashed var(--color-border-hover);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-}
-
-.demo-accounts__title {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--slate-500);
-  margin-bottom: var(--space-3);
-}
-
-.demo-accounts__item {
-  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
-  font-size: var(--text-xs);
-  color: var(--slate-600);
-  line-height: 1.8;
-}
-
-.demo-accounts__item strong { color: var(--slate-800); }
-
-.demo-accounts__hint {
-  font-size: var(--text-xs);
-  color: var(--slate-500);
-  margin-bottom: var(--space-3);
-}
-
-.demo-roles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-
-.demo-roles__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin: 0;
-}
-
-.demo-roles__destino {
-  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
-  font-size: 0.6875rem;
-  color: var(--slate-500);
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 520px) {
-  .demo-roles { grid-template-columns: 1fr; }
-}
-
 /* ═══════════════════════════════════════════════════════════
    UTILIDADES
    ═══════════════════════════════════════════════════════════ */
@@ -940,7 +733,6 @@ input[type="checkbox"] {
   .navbar__nav { gap: var(--space-1); }
   .navbar__nav a { padding: var(--space-2); }
 
-  .role-switcher__label { display: none; }
   .session-chip { display: none; }
 
   .page-content { padding: var(--space-6) 0 var(--space-10); }
