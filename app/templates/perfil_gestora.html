@@ -102,34 +102,17 @@
   <div class="gestora-section-heading">
     <div>
       <h2 class="card__title" id="fichas-gestora-heading">Fichas &amp; Trimestres</h2>
-      <p class="card__subtitle" id="fichas-gestora-subtitle">Fichas del programa con su carga asignada.</p>
+      <p class="card__subtitle" id="fichas-gestora-subtitle">Fichas del programa por trimestre y jornada, con su carga asignada.</p>
     </div>
   </div>
 
   <div class="gestora-empty hidden" id="fichas-gestora-mensaje" role="status">
-    <strong>No hay fichas registradas en este trimestre.</strong>
+    <strong>No hay fichas registradas.</strong>
     <p>Las fichas se habilitan aquí a medida que la matrícula de cada trimestre se cierre.</p>
   </div>
 
-  <div class="gestora-table-wrap" id="fichas-gestora-tabla-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Ficha</th>
-          <th scope="col">Programa</th>
-          <th scope="col">Jornada</th>
-          <th scope="col">Trimestre</th>
-          <th scope="col">Instructores</th>
-          <th scope="col">Horas</th>
-          <th scope="col">Competencias</th>
-          <th scope="col">Transversales</th>
-          <th scope="col">Estado</th>
-        </tr>
-      </thead>
-      <tbody id="fichas-gestora-body">
-        <tr><td colspan="9" class="gestora-loading">Cargando fichas…</td></tr>
-      </tbody>
-    </table>
+  <div class="gestora-acordeon" id="fichas-gestora-acordeon">
+    <p class="gestora-loading">Cargando fichas…</p>
   </div>
 </section>
 

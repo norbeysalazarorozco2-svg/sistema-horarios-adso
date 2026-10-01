@@ -250,83 +250,191 @@ const renderBandeja = () => {
 
 /* ── Fichas & Trimestres ── */
 
-const renderFichas = (datos) => {
-  const cuerpo = obtenerElemento('fichas-gestora-body');
-  const mensaje = obtenerElemento('fichas-gestora-mensaje');
-  const tabla = obtenerElemento('fichas-gestora-tabla-wrap');
-  const subtitulo = obtenerElemento('fichas-gestora-subtitle');
-  if (!cuerpo || !mensaje || !tabla) return;
+/* Trimestres desplegados en el acordeón; se conservan al refrescar. */
+const trimestresAbiertos = new Set();
 
-  if (subtitulo) {
-    subtitulo.textContent = datos.total_fichas > 0
-      ? `${datos.total_fichas} fichas · ${formatearNumero(datos.total_horas)} h semanales · ${datos.fichas_sin_instructor} sin instructor`
-      : 'Fichas del programa con su carga asignada.';
-  }
+const ORDEN_JORNADAS = ['diurna', 'mañana', 'tarde', 'nocturna', 'noche'];
+const ICONOS_JORNADA = {
+  diurna: '☀',
+  mañana: '🌅',
+  tarde: '🌤',
+  nocturna: '🌙',
+  noche: '🌙',
+};
 
-  cuerpo.replaceChildren();
+const claveJornada = (jornada) => String(jornada || '').trim().toLowerCase();
 
-  if (datos.items.length === 0) {
-    mensaje.hidden = false;
-    tabla.hidden = true;
-    return;
-  }
+const compararJornadas = (a, b) => {
+  const indice = (jornada) => {
+    const posicion = ORDEN_JORNADAS.indexOf(claveJornada(jornada));
+    return posicion === -1 ? ORDEN_JORNADAS.length : posicion;
+  };
+  return indice(a) - indice(b) || String(a).localeCompare(String(b), 'es');
+};
 
-  mensaje.hidden = true;
-  tabla.hidden = false;
+const agruparPorJornada = (fichas) => {
+  const grupos = new Map();
+  fichas.forEach((ficha) => {
+    const jornada = ficha.jornada || 'Sin jornada';
+    if (!grupos.has(jornada)) grupos.set(jornada, []);
+    grupos.get(jornada).push(ficha);
+  });
+  return [...grupos.entries()]
+    .sort(([a], [b]) => compararJornadas(a, b))
+    .map(([jornada, items]) => [jornada, [...items].sort((x, y) => x.id - y.id)]);
+};
 
-  datos.items.forEach((ficha) => {
-    const fila = document.createElement('tr');
+const textoFichas = (cantidad) => `${cantidad} ${cantidad === 1 ? 'ficha' : 'fichas'}`;
 
-    const celdaFicha = document.createElement('td');
-    celdaFicha.appendChild(crearElemento('strong', '', `Ficha ${ficha.id}`));
-    fila.appendChild(celdaFicha);
+const campoFicha = (etiqueta, contenido) => {
+  const campo = crearElemento('div', 'gestora-ficha__campo');
+  campo.appendChild(crearElemento('span', 'gestora-ficha__etiqueta', etiqueta));
+  const valor = crearElemento('div', 'gestora-ficha__valor');
+  valor.appendChild(contenido);
+  campo.appendChild(valor);
+  return campo;
+};
 
-    fila.appendChild(crearElemento('td', '', ficha.programa));
-    fila.appendChild(crearElemento('td', '', ficha.jornada));
-    fila.appendChild(crearElemento('td', '', `Trimestre ${ficha.trimestre}`));
+const tarjetaFicha = (ficha) => {
+  const tarjeta = crearElemento('li', 'gestora-ficha');
 
-    const celdaInstructores = document.createElement('td');
-    if (ficha.instructores.length === 0) {
-      celdaInstructores.appendChild(crearElemento('span', 'text-muted', 'Sin asignar'));
-    } else {
-      ficha.instructores.forEach((instructor) => {
-        celdaInstructores.appendChild(bloqueInstructor(instructor));
-      });
-    }
-    fila.appendChild(celdaInstructores);
+  const cabecera = crearElemento('div', 'gestora-ficha__cabecera');
+  const identidad = crearElemento('div', 'gestora-ficha__identidad');
+  identidad.appendChild(crearElemento('strong', 'gestora-ficha__numero', `Ficha ${ficha.id}`));
+  identidad.appendChild(crearElemento('span', 'gestora-ficha__programa', `${ficha.programa} · ${ficha.jornada}`));
+  cabecera.appendChild(identidad);
+  cabecera.appendChild(crearElemento(
+    'span',
+    `badge ${ficha.estado === 'Asignada' ? 'badge-success' : 'badge-nuevo'}`,
+    ficha.estado,
+  ));
+  tarjeta.appendChild(cabecera);
 
-    fila.appendChild(crearElemento('td', '', `${formatearNumero(ficha.horas_semanales)} h`));
+  const campos = crearElemento('div', 'gestora-ficha__campos');
 
-    const celdaCompetencias = document.createElement('td');
-    const contenedor = crearElemento('div', 'gestora-competencias');
-    ficha.competencias.forEach((competencia) => {
-      contenedor.appendChild(crearElemento('span', 'badge badge-primary', competencia));
+  const instructores = crearElemento('div', 'gestora-ficha__instructores');
+  if (ficha.instructores.length === 0) {
+    instructores.appendChild(crearElemento('span', 'text-muted', 'Sin asignar'));
+  } else {
+    ficha.instructores.forEach((instructor) => {
+      instructores.appendChild(bloqueInstructor(instructor));
     });
-    celdaCompetencias.appendChild(contenedor);
-    fila.appendChild(celdaCompetencias);
+  }
+  campos.appendChild(campoFicha('Instructores', instructores));
 
-    const celdaTransversales = document.createElement('td');
-    if (ficha.solicitudes_abiertas > 0) {
-      celdaTransversales.appendChild(crearElemento(
+  campos.appendChild(campoFicha(
+    'Horas',
+    crearElemento('span', 'gestora-ficha__horas', `${formatearNumero(ficha.horas_semanales)} h`),
+  ));
+
+  const competencias = crearElemento('div', 'gestora-competencias');
+  ficha.competencias.forEach((competencia) => {
+    competencias.appendChild(crearElemento('span', 'badge badge-primary', competencia));
+  });
+  campos.appendChild(campoFicha('Competencias', competencias));
+
+  campos.appendChild(campoFicha(
+    'Transversales',
+    ficha.solicitudes_abiertas > 0
+      ? crearElemento(
         'span',
         'badge badge-nuevo',
         `${ficha.solicitudes_abiertas} abierta(s) · ${formatearNumero(ficha.horas_transversales)} h`,
-      ));
-    } else {
-      celdaTransversales.appendChild(crearElemento('span', 'text-muted', '—'));
-    }
-    fila.appendChild(celdaTransversales);
+      )
+      : crearElemento('span', 'text-muted', '—'),
+  ));
 
-    const celdaEstado = document.createElement('td');
-    celdaEstado.appendChild(crearElemento(
-      'span',
-      `badge ${ficha.estado === 'Asignada' ? 'badge-success' : 'badge-nuevo'}`,
-      ficha.estado,
-    ));
-    fila.appendChild(celdaEstado);
+  tarjeta.appendChild(campos);
+  return tarjeta;
+};
 
-    cuerpo.appendChild(fila);
-  });
+const grupoJornada = (jornada, fichas) => {
+  const grupo = crearElemento('div', 'gestora-jornada');
+  const titulo = crearElemento('h4', 'gestora-jornada__titulo');
+  const icono = crearElemento('span', 'gestora-jornada__icono', ICONOS_JORNADA[claveJornada(jornada)] || '🕘');
+  icono.setAttribute('aria-hidden', 'true');
+  titulo.appendChild(icono);
+  titulo.appendChild(crearElemento('span', '', jornada));
+  titulo.appendChild(crearElemento('span', 'gestora-jornada__total', textoFichas(fichas.length)));
+  grupo.appendChild(titulo);
+
+  const lista = crearElemento('ul', 'gestora-jornada__fichas');
+  fichas.forEach((ficha) => lista.appendChild(tarjetaFicha(ficha)));
+  grupo.appendChild(lista);
+  return grupo;
+};
+
+const alternarTrimestre = (numero, abrir) => {
+  const boton = obtenerElemento(`acordeon-trimestre-${numero}-boton`);
+  const panel = obtenerElemento(`acordeon-trimestre-${numero}-panel`);
+  const expandir = abrir ?? boton?.getAttribute('aria-expanded') !== 'true';
+  if (expandir) trimestresAbiertos.add(numero);
+  else trimestresAbiertos.delete(numero);
+  if (!boton || !panel) return;
+  boton.setAttribute('aria-expanded', String(expandir));
+  boton.closest('.gestora-acordeon__item')?.classList.toggle('is-abierto', expandir);
+  panel.hidden = !expandir;
+};
+
+const itemTrimestre = ({ trimestre: numero, items }) => {
+  const abierto = trimestresAbiertos.has(numero);
+  const item = crearElemento('div', `gestora-acordeon__item${abierto ? ' is-abierto' : ''}`);
+
+  const encabezado = crearElemento('h3', 'gestora-acordeon__encabezado');
+  const boton = crearElemento('button', 'gestora-acordeon__boton');
+  boton.type = 'button';
+  boton.id = `acordeon-trimestre-${numero}-boton`;
+  boton.dataset.trimestre = String(numero);
+  boton.setAttribute('aria-expanded', String(abierto));
+  boton.setAttribute('aria-controls', `acordeon-trimestre-${numero}-panel`);
+  const chevron = crearElemento('span', 'gestora-acordeon__chevron', '▶');
+  chevron.setAttribute('aria-hidden', 'true');
+  boton.appendChild(chevron);
+  boton.appendChild(crearElemento('span', 'gestora-acordeon__titulo', `Trimestre ${numero}`));
+  boton.appendChild(crearElemento('span', 'gestora-acordeon__total', textoFichas(items.length)));
+  encabezado.appendChild(boton);
+  item.appendChild(encabezado);
+
+  const panel = crearElemento('div', 'gestora-acordeon__panel');
+  panel.id = `acordeon-trimestre-${numero}-panel`;
+  panel.setAttribute('role', 'region');
+  panel.setAttribute('aria-labelledby', boton.id);
+  panel.hidden = !abierto;
+
+  if (items.length === 0) {
+    panel.appendChild(crearElemento('p', 'gestora-acordeon__vacio', 'No hay fichas registradas en este trimestre.'));
+  } else {
+    agruparPorJornada(items).forEach(([jornada, fichas]) => {
+      panel.appendChild(grupoJornada(jornada, fichas));
+    });
+  }
+  item.appendChild(panel);
+  return item;
+};
+
+const renderFichas = (resumenes) => {
+  const acordeon = obtenerElemento('fichas-gestora-acordeon');
+  const mensaje = obtenerElemento('fichas-gestora-mensaje');
+  const subtitulo = obtenerElemento('fichas-gestora-subtitle');
+  if (!acordeon || !mensaje) return;
+
+  const ordenados = [...resumenes].sort((a, b) => a.trimestre - b.trimestre);
+  const totalFichas = ordenados.reduce((total, datos) => total + datos.total_fichas, 0);
+  const totalHoras = ordenados.reduce((total, datos) => total + datos.total_horas, 0);
+  const sinInstructor = ordenados.reduce((total, datos) => total + datos.fichas_sin_instructor, 0);
+
+  if (subtitulo) {
+    subtitulo.textContent = totalFichas > 0
+      ? `${totalFichas} fichas · ${formatearNumero(totalHoras)} h semanales · ${sinInstructor} sin instructor`
+      : 'Fichas del programa por trimestre y jornada, con su carga asignada.';
+  }
+
+  acordeon.replaceChildren();
+  mensaje.classList.toggle('hidden', totalFichas > 0);
+  acordeon.hidden = totalFichas === 0;
+  if (totalFichas === 0) return;
+
+  ordenados.forEach((datos) => acordeon.appendChild(itemTrimestre(datos)));
 };
 
 /* ── Horarios ── */
@@ -533,9 +641,14 @@ const cargarBandeja = async () => {
   renderBandeja();
 };
 
+/* El acordeón de Fichas & Trimestres solo muestra los trimestres 1 a 4. */
+const TRIMESTRES_ACORDEON = [1, 2, 3, 4];
+
 const cargarFichas = async () => {
-  const datos = await pedir(`/api/v1/gestora/fichas?trimestre=${trimestre}`);
-  renderFichas(datos);
+  const resumenes = await Promise.all(
+    TRIMESTRES_ACORDEON.map((numero) => pedir(`/api/v1/gestora/fichas?trimestre=${numero}`)),
+  );
+  renderFichas(resumenes);
 };
 
 const cargarHorarios = async () => {
@@ -561,8 +674,9 @@ const cargarTodo = async () => {
 
 const cambiarTrimestre = async (evento) => {
   trimestre = Number(evento.currentTarget.value) || 1;
+  alternarTrimestre(trimestre, true);
   try {
-    await Promise.all([cargarFichas(), cargarHorarios()]);
+    await cargarHorarios();
   } catch (error) {
     mostrarError(error.message || 'No fue posible cargar el trimestre.');
   }
@@ -573,6 +687,7 @@ const cambiarTrimestre = async (evento) => {
 const inicializar = () => {
   const selectorTrimestre = obtenerElemento('selector-trimestre');
   trimestre = Number(selectorTrimestre?.value) || 1;
+  trimestresAbiertos.add(trimestre);
 
   selectorTrimestre?.addEventListener('change', cambiarTrimestre);
   obtenerElemento('btn-actualizar')?.addEventListener('click', cargarTodo);
@@ -583,6 +698,11 @@ const inicializar = () => {
   });
   document.addEventListener('keydown', (evento) => {
     if (evento.key === 'Escape') cerrarModal();
+  });
+
+  obtenerElemento('fichas-gestora-acordeon')?.addEventListener('click', (evento) => {
+    const boton = evento.target.closest('button[data-trimestre]');
+    if (boton) alternarTrimestre(Number(boton.dataset.trimestre));
   });
 
   obtenerElemento('bandeja-body')?.addEventListener('click', (evento) => {
