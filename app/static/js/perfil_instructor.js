@@ -190,15 +190,6 @@ const renderSolicitudes = (datosSolicitudes) => {
     const fila = document.createElement('tr');
     fila.appendChild(crearElemento('td', '', `Ficha ${solicitud.ficha_id}`));
     fila.appendChild(crearElemento('td', '', solicitud.transversales.join(', ')));
-    const horas = solicitud.horas_sugeridas == null
-      ? '—'
-      : `${formatearNumero(solicitud.horas_sugeridas)} h`;
-    fila.appendChild(crearElemento('td', '', horas));
-    fila.appendChild(crearElemento(
-      'td',
-      'perfil-solicitud-texto',
-      solicitud.bloque_sugerido?.trim() || '—',
-    ));
     fila.appendChild(crearElemento(
       'td',
       'perfil-solicitud-texto',
@@ -362,16 +353,9 @@ const solicitarTransversales = async (evento) => {
     .map((input) => Number(input.value));
   const asignaturasSeleccionadas = [...document.querySelectorAll('input[name="transversal"]:checked')]
     .map((input) => input.value);
-  const horasInput = obtenerElemento('transversales-horas');
-  const bloqueInput = obtenerElemento('transversales-bloque');
   const comentariosInput = obtenerElemento('transversales-comentarios');
-  const horas = horasInput?.value.trim() ?? '';
   if (fichasSeleccionadas.length === 0 || asignaturasSeleccionadas.length === 0) {
     mostrarToast('error', 'Solicitud incompleta', 'Selecciona al menos una ficha y una asignatura.');
-    return;
-  }
-  if (horas !== '' && (!Number.isFinite(Number(horas)) || Number(horas) < 0 || Number(horas) > 40)) {
-    mostrarToast('error', 'Horas inválidas', 'Indica un valor entre 0 y 40 horas.');
     return;
   }
 
@@ -389,8 +373,6 @@ const solicitarTransversales = async (evento) => {
       body: JSON.stringify({
         ficha_ids: fichasSeleccionadas,
         transversales: asignaturasSeleccionadas,
-        horas_sugeridas: horas === '' ? null : Number(horas),
-        bloque_sugerido: bloqueInput?.value.trim() ?? '',
         comentarios: comentariosInput?.value.trim() ?? '',
       }),
     });
