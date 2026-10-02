@@ -590,8 +590,28 @@ const cargarBandeja = async () => {
   renderBandeja();
 };
 
+/* Las opciones del selector salen de la duración del programa que entrega la API. */
+const renderSelectorTrimestres = (trimestres, seleccionado) => {
+  const selector = obtenerElemento('selector-trimestre');
+  if (!selector || !Array.isArray(trimestres) || trimestres.length === 0) return;
+
+  const actuales = [...selector.options].map((opcion) => Number(opcion.value));
+  const cambio = actuales.length !== trimestres.length
+    || trimestres.some((numero, indice) => numero !== actuales[indice]);
+  if (cambio) {
+    selector.replaceChildren(...trimestres.map((numero) => {
+      const opcion = crearElemento('option', '', `Trimestre ${numero}`);
+      opcion.value = String(numero);
+      return opcion;
+    }));
+  }
+  selector.value = String(seleccionado);
+};
+
 const cargarFichas = async () => {
-  renderFichas(await pedir(`/api/v1/gestora/fichas?trimestre=${trimestre}`));
+  const datos = await pedir(`/api/v1/gestora/fichas?trimestre=${trimestre}`);
+  renderSelectorTrimestres(datos.trimestres, datos.trimestre);
+  renderFichas(datos);
 };
 
 const cargarHorarios = async () => {

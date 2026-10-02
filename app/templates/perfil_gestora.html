@@ -23,11 +23,8 @@
     <div class="form-group">
       <label class="form-label" for="selector-trimestre">Trimestre</label>
       <select class="form-input" id="selector-trimestre">
-        {% for numero in range(1, 7) %}
-        <option value="{{ numero }}" {% if numero == trimestre_actual %}selected{% endif %}>
-          Trimestre {{ numero }}
-        </option>
-        {% endfor %}
+        {# Las demás opciones las arma perfil_gestora.js con los trimestres del programa. #}
+        <option value="{{ trimestre_actual }}" selected>Trimestre {{ trimestre_actual }}</option>
       </select>
     </div>
     <button type="button" class="btn btn-secondary" id="btn-actualizar">🔄 Actualizar</button>
