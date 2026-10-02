@@ -18,6 +18,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.auth import USUARIOS_MOCK
+from app.api.catalogo import obtener_programa
 from app.api.perfil import SOLICITUDES_TRANSVERSALES
 from app.core.security import require_gestora
 from app.schemas.gestora import (
@@ -38,6 +39,7 @@ from app.schemas.gestora import (
     ResultadoActualizacionSolicitud,
     SolicitudBandeja,
 )
+from app.schemas.catalogo import ProgramaFormacion
 
 
 router = APIRouter(
@@ -46,6 +48,9 @@ router = APIRouter(
 )
 
 # ⚠️ PROVISIONAL — datos en memoria (reemplazar con SQLAlchemy)
+
+# Programa que coordina la Gestora; su duración sale del catálogo de programas.
+PROGRAMA_GESTORA = "ADSO"
 
 
 # ── Instructores vinculados a la Gestora ──────────────────────────────────────
@@ -237,6 +242,34 @@ def _exigir_gestora(usuario: dict) -> int:
             detail="Esta operación solo está disponible para la Gestora.",
         )
     return gestoras_id
+
+
+# ── Programa y trimestres ────────────────────────────────────────────────────
+
+def _programa_gestora() -> ProgramaFormacion:
+    programa = obtener_programa(PROGRAMA_GESTORA)
+    if programa is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"El programa {PROGRAMA_GESTORA} no está registrado en el catálogo.",
+        )
+    return programa
+
+
+def _validar_trimestre(trimestre: int | None) -> int | None:
+    """Rechaza trimestres fuera de la duración del programa de la Gestora."""
+    if trimestre is None:
+        return None
+    programa = _programa_gestora()
+    if trimestre > programa.total_trimestres:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"El programa {programa.codigo} tiene {programa.total_trimestres} "
+                f"trimestres; el trimestre {trimestre} no existe."
+            ),
+        )
+    return trimestre
 
 
 # ── Consultas sobre el padrón ────────────────────────────────────────────────
@@ -501,10 +534,11 @@ def consultar_perfil_gestora(usuario: dict = Depends(require_gestora)) -> Perfil
 )
 def listar_bandeja_solicitudes(
     estado: str | None = Query(default=None, max_length=30),
-    trimestre: int | None = Query(default=None, ge=1, le=6),
+    trimestre: int | None = Query(default=None, ge=1),
     usuario: dict = Depends(require_gestora),
 ) -> BandejaSolicitudes:
     _exigir_gestora(usuario)
+    trimestre = _validar_trimestre(trimestre)
     solicitudes = _solicitudes_ordenadas()
 
     contadores = ContadoresBandeja(
@@ -591,10 +625,12 @@ def actualizar_estado_solicitud(
     summary="Fichas y trimestres gestionados por la Gestora",
 )
 def listar_fichas_trimestres(
-    trimestre: int | None = Query(default=None, ge=1, le=6),
+    trimestre: int | None = Query(default=None, ge=1),
     usuario: dict = Depends(require_gestora),
 ) -> ResumenFichasTrimestres:
     _exigir_gestora(usuario)
+    programa = _programa_gestora()
+    trimestre = _validar_trimestre(trimestre)
     trimestre_actual_ = trimestre_actual()
     trimestre_consulta = trimestre or trimestre_actual_
     fichas = _fichas_del_trimestre(trimestre_consulta)
@@ -639,6 +675,8 @@ def listar_fichas_trimestres(
         total_horas=round(sum(item.horas_semanales for item in items), 1),
         fichas_sin_instructor=sum(1 for item in items if item.estado == "Sin instructor"),
         trimestre_actual=trimestre_actual_,
+        programa=programa.codigo,
+        trimestres=programa.trimestres,
     )
 
 
@@ -648,11 +686,12 @@ def listar_fichas_trimestres(
     summary="Horario consolidado del trimestre",
 )
 def listar_horarios(
-    trimestre: int | None = Query(default=None, ge=1, le=6),
+    trimestre: int | None = Query(default=None, ge=1),
     jornada: str = Query(default="todas", max_length=20),
     usuario: dict = Depends(require_gestora),
 ) -> HorarioGestora:
     _exigir_gestora(usuario)
+    trimestre = _validar_trimestre(trimestre)
     trimestre_consulta = trimestre or trimestre_actual()
     registros = _horarios_del_trimestre(trimestre_consulta)
 

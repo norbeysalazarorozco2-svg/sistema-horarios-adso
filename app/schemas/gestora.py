@@ -65,7 +65,7 @@ class PerfilGestora(BaseModel):
     nombre: str
     correo_sena: str
     rol: str = "gestora"
-    trimestre_actual: int = Field(ge=1, le=6)
+    trimestre_actual: int = Field(ge=1)
     solicitudes_abiertas: int = Field(ge=0)
     solicitudes_vencidas: int = Field(ge=0)
     fichas_activas: int = Field(ge=0)
@@ -140,7 +140,7 @@ class FichaTrimestre(BaseModel):
     id: int
     programa: str
     jornada: str
-    trimestre: int = Field(ge=1, le=6)
+    trimestre: int = Field(ge=1)
     horas_semanales: float = Field(ge=0)
     competencias: list[str] = Field(default_factory=list)
     estado: str = "Asignada"
@@ -150,12 +150,15 @@ class FichaTrimestre(BaseModel):
 
 
 class ResumenFichasTrimestres(BaseModel):
-    trimestre: int = Field(ge=1, le=6)
+    trimestre: int = Field(ge=1)
     items: list[FichaTrimestre] = Field(default_factory=list)
     total_fichas: int = Field(ge=0)
     total_horas: float = Field(ge=0)
     fichas_sin_instructor: int = Field(ge=0)
-    trimestre_actual: int = Field(ge=1, le=6)
+    trimestre_actual: int = Field(ge=1)
+    # Trimestres del programa según su duración (no según las fichas existentes).
+    programa: str = ""
+    trimestres: list[int] = Field(default_factory=list)
 
 
 # ── Horarios ─────────────────────────────────────────────────────────────────
@@ -172,7 +175,7 @@ class BloqueHorario(BaseModel):
 
 
 class HorarioGestora(BaseModel):
-    trimestre: int = Field(ge=1, le=6)
+    trimestre: int = Field(ge=1)
     jornada: str
     dias: list[str] = Field(default_factory=list)
     bloques: list[str] = Field(default_factory=list)
