@@ -250,12 +250,8 @@ const renderBandeja = () => {
 
 /* ── Fichas & Trimestres ── */
 
-/* Trimestres desplegados en el acordeón; se conservan al refrescar. */
-const trimestresAbiertos = new Set();
-
-const ORDEN_JORNADAS = ['diurna', 'mañana', 'tarde', 'nocturna', 'noche'];
+const ORDEN_JORNADAS = ['mañana', 'tarde', 'nocturna', 'noche'];
 const ICONOS_JORNADA = {
-  diurna: '☀',
   mañana: '🌅',
   tarde: '🌤',
   nocturna: '🌙',
@@ -263,6 +259,9 @@ const ICONOS_JORNADA = {
 };
 
 const claveJornada = (jornada) => String(jornada || '').trim().toLowerCase();
+
+/* La API reporta la jornada de la mañana como "Diurna"; en pantalla se muestra "Mañana". */
+const nombreJornada = (jornada) => (claveJornada(jornada) === 'diurna' ? 'Mañana' : jornada);
 
 const compararJornadas = (a, b) => {
   const indice = (jornada) => {
@@ -275,7 +274,7 @@ const compararJornadas = (a, b) => {
 const agruparPorJornada = (fichas) => {
   const grupos = new Map();
   fichas.forEach((ficha) => {
-    const jornada = ficha.jornada || 'Sin jornada';
+    const jornada = nombreJornada(ficha.jornada) || 'Sin jornada';
     if (!grupos.has(jornada)) grupos.set(jornada, []);
     grupos.get(jornada).push(ficha);
   });
@@ -301,7 +300,7 @@ const tarjetaFicha = (ficha) => {
   const cabecera = crearElemento('div', 'gestora-ficha__cabecera');
   const identidad = crearElemento('div', 'gestora-ficha__identidad');
   identidad.appendChild(crearElemento('strong', 'gestora-ficha__numero', `Ficha ${ficha.id}`));
-  identidad.appendChild(crearElemento('span', 'gestora-ficha__programa', `${ficha.programa} · ${ficha.jornada}`));
+  identidad.appendChild(crearElemento('span', 'gestora-ficha__programa', `${ficha.programa} · ${nombreJornada(ficha.jornada)}`));
   cabecera.appendChild(identidad);
   cabecera.appendChild(crearElemento(
     'span',
@@ -364,77 +363,32 @@ const grupoJornada = (jornada, fichas) => {
   return grupo;
 };
 
-const alternarTrimestre = (numero, abrir) => {
-  const boton = obtenerElemento(`acordeon-trimestre-${numero}-boton`);
-  const panel = obtenerElemento(`acordeon-trimestre-${numero}-panel`);
-  const expandir = abrir ?? boton?.getAttribute('aria-expanded') !== 'true';
-  if (expandir) trimestresAbiertos.add(numero);
-  else trimestresAbiertos.delete(numero);
-  if (!boton || !panel) return;
-  boton.setAttribute('aria-expanded', String(expandir));
-  boton.closest('.gestora-acordeon__item')?.classList.toggle('is-abierto', expandir);
-  panel.hidden = !expandir;
-};
-
-const itemTrimestre = ({ trimestre: numero, items }) => {
-  const abierto = trimestresAbiertos.has(numero);
-  const item = crearElemento('div', `gestora-acordeon__item${abierto ? ' is-abierto' : ''}`);
-
-  const encabezado = crearElemento('h3', 'gestora-acordeon__encabezado');
-  const boton = crearElemento('button', 'gestora-acordeon__boton');
-  boton.type = 'button';
-  boton.id = `acordeon-trimestre-${numero}-boton`;
-  boton.dataset.trimestre = String(numero);
-  boton.setAttribute('aria-expanded', String(abierto));
-  boton.setAttribute('aria-controls', `acordeon-trimestre-${numero}-panel`);
-  const chevron = crearElemento('span', 'gestora-acordeon__chevron', '▶');
-  chevron.setAttribute('aria-hidden', 'true');
-  boton.appendChild(chevron);
-  boton.appendChild(crearElemento('span', 'gestora-acordeon__titulo', `Trimestre ${numero}`));
-  boton.appendChild(crearElemento('span', 'gestora-acordeon__total', textoFichas(items.length)));
-  encabezado.appendChild(boton);
-  item.appendChild(encabezado);
-
-  const panel = crearElemento('div', 'gestora-acordeon__panel');
-  panel.id = `acordeon-trimestre-${numero}-panel`;
-  panel.setAttribute('role', 'region');
-  panel.setAttribute('aria-labelledby', boton.id);
-  panel.hidden = !abierto;
-
-  if (items.length === 0) {
-    panel.appendChild(crearElemento('p', 'gestora-acordeon__vacio', 'No hay fichas registradas en este trimestre.'));
-  } else {
-    agruparPorJornada(items).forEach(([jornada, fichas]) => {
-      panel.appendChild(grupoJornada(jornada, fichas));
-    });
-  }
-  item.appendChild(panel);
-  return item;
-};
-
-const renderFichas = (resumenes) => {
-  const acordeon = obtenerElemento('fichas-gestora-acordeon');
+const renderFichas = (datos) => {
+  const lista = obtenerElemento('fichas-gestora-lista');
   const mensaje = obtenerElemento('fichas-gestora-mensaje');
   const subtitulo = obtenerElemento('fichas-gestora-subtitle');
-  if (!acordeon || !mensaje) return;
+  if (!lista || !mensaje) return;
 
-  const ordenados = [...resumenes].sort((a, b) => a.trimestre - b.trimestre);
-  const totalFichas = ordenados.reduce((total, datos) => total + datos.total_fichas, 0);
-  const totalHoras = ordenados.reduce((total, datos) => total + datos.total_horas, 0);
-  const sinInstructor = ordenados.reduce((total, datos) => total + datos.fichas_sin_instructor, 0);
+  const items = datos.items || [];
+  const totalFichas = datos.total_fichas ?? items.length;
 
   if (subtitulo) {
     subtitulo.textContent = totalFichas > 0
-      ? `${totalFichas} fichas · ${formatearNumero(totalHoras)} h semanales · ${sinInstructor} sin instructor`
-      : 'Fichas del programa por trimestre y jornada, con su carga asignada.';
+      ? `Trimestre ${datos.trimestre} · ${totalFichas} fichas · ${formatearNumero(datos.total_horas)} h semanales · ${datos.fichas_sin_instructor} sin instructor`
+      : 'Fichas del trimestre seleccionado, organizadas por jornada.';
   }
 
-  acordeon.replaceChildren();
+  const titulo = mensaje.querySelector('strong');
+  if (titulo) titulo.textContent = `No hay fichas registradas en el Trimestre ${datos.trimestre}.`;
+
+  lista.replaceChildren();
   mensaje.classList.toggle('hidden', totalFichas > 0);
-  acordeon.hidden = totalFichas === 0;
+  lista.hidden = totalFichas === 0;
   if (totalFichas === 0) return;
 
-  ordenados.forEach((datos) => acordeon.appendChild(itemTrimestre(datos)));
+  agruparPorJornada(items).forEach(([jornada, fichas]) => {
+    lista.appendChild(grupoJornada(jornada, fichas));
+  });
 };
 
 /* ── Horarios ── */
@@ -641,14 +595,8 @@ const cargarBandeja = async () => {
   renderBandeja();
 };
 
-/* El acordeón de Fichas & Trimestres solo muestra los trimestres 1 a 4. */
-const TRIMESTRES_ACORDEON = [1, 2, 3, 4];
-
 const cargarFichas = async () => {
-  const resumenes = await Promise.all(
-    TRIMESTRES_ACORDEON.map((numero) => pedir(`/api/v1/gestora/fichas?trimestre=${numero}`)),
-  );
-  renderFichas(resumenes);
+  renderFichas(await pedir(`/api/v1/gestora/fichas?trimestre=${trimestre}`));
 };
 
 const cargarHorarios = async () => {
@@ -674,9 +622,8 @@ const cargarTodo = async () => {
 
 const cambiarTrimestre = async (evento) => {
   trimestre = Number(evento.currentTarget.value) || 1;
-  alternarTrimestre(trimestre, true);
   try {
-    await cargarHorarios();
+    await Promise.all([cargarFichas(), cargarHorarios()]);
   } catch (error) {
     mostrarError(error.message || 'No fue posible cargar el trimestre.');
   }
@@ -687,7 +634,6 @@ const cambiarTrimestre = async (evento) => {
 const inicializar = () => {
   const selectorTrimestre = obtenerElemento('selector-trimestre');
   trimestre = Number(selectorTrimestre?.value) || 1;
-  trimestresAbiertos.add(trimestre);
 
   selectorTrimestre?.addEventListener('change', cambiarTrimestre);
   obtenerElemento('btn-actualizar')?.addEventListener('click', cargarTodo);
@@ -698,11 +644,6 @@ const inicializar = () => {
   });
   document.addEventListener('keydown', (evento) => {
     if (evento.key === 'Escape') cerrarModal();
-  });
-
-  obtenerElemento('fichas-gestora-acordeon')?.addEventListener('click', (evento) => {
-    const boton = evento.target.closest('button[data-trimestre]');
-    if (boton) alternarTrimestre(Number(boton.dataset.trimestre));
   });
 
   obtenerElemento('bandeja-body')?.addEventListener('click', (evento) => {

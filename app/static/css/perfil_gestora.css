@@ -193,111 +193,15 @@
   max-width: 320px;
 }
 
-/* ── Acordeón de fichas por trimestre ── */
-.gestora-acordeon {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.gestora-acordeon__item {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  transition: border-color var(--transition-fast);
-}
-
-.gestora-acordeon__item.is-abierto {
-  border-color: var(--green-200);
-}
-
-.gestora-acordeon__encabezado {
-  margin: 0;
-}
-
-.gestora-acordeon__boton {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-4) var(--space-5);
-  border: 0;
-  background: transparent;
-  color: var(--slate-800);
-  font-family: var(--font-heading);
-  font-size: var(--text-base);
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.gestora-acordeon__boton:hover {
-  background: var(--green-50);
-}
-
-.gestora-acordeon__boton:focus-visible {
-  outline: 2px solid var(--green-600);
-  outline-offset: -2px;
-}
-
-.gestora-acordeon__item.is-abierto .gestora-acordeon__boton {
-  background: var(--green-50);
-  color: var(--green-800);
-  border-bottom: 1px solid var(--green-200);
-}
-
-.gestora-acordeon__chevron {
-  display: inline-block;
-  font-size: var(--text-xs);
-  color: var(--slate-500);
-  transition: transform var(--transition-fast);
-}
-
-.gestora-acordeon__item.is-abierto .gestora-acordeon__chevron {
-  transform: rotate(90deg);
-  color: var(--green-700);
-}
-
-.gestora-acordeon__titulo {
-  flex: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.gestora-acordeon__total {
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-full);
-  background: var(--slate-100);
-  color: var(--slate-600);
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.gestora-acordeon__item.is-abierto .gestora-acordeon__total {
-  background: var(--green-100);
-  color: var(--green-800);
-}
-
-.gestora-acordeon__panel {
+/* ── Fichas del trimestre seleccionado, agrupadas por jornada ── */
+.gestora-fichas-lista {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  padding: var(--space-5);
 }
 
-.gestora-acordeon__panel[hidden] {
+.gestora-fichas-lista[hidden] {
   display: none;
-}
-
-.gestora-acordeon__vacio {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--slate-500);
 }
 
 /* ── Jornada: separador dentro del trimestre ── */
@@ -668,14 +572,6 @@
   .gestora-modal__campos,
   .gestora-ficha__campos {
     grid-template-columns: 1fr;
-  }
-
-  .gestora-acordeon__boton {
-    padding: var(--space-3) var(--space-4);
-  }
-
-  .gestora-acordeon__panel {
-    padding: var(--space-4);
   }
 
   .gestora-header-actions {
