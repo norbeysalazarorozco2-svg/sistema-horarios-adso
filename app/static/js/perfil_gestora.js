@@ -226,14 +226,9 @@ const renderBandeja = () => {
 
   cuerpo.replaceChildren();
 
-  if (visibles.length === 0) {
-    mensaje.hidden = false;
-    tabla.hidden = true;
-    return;
-  }
-
-  mensaje.hidden = true;
-  tabla.hidden = false;
+  mensaje.classList.toggle('hidden', visibles.length > 0);
+  tabla.hidden = visibles.length === 0;
+  if (visibles.length === 0) return;
 
   visibles.forEach((solicitud) => {
     const fila = document.createElement('tr');
