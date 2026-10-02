@@ -56,7 +56,26 @@
   </div>
 </section>
 
-<!-- ── 1. Bandeja de solicitudes ── -->
+<!-- ── 1. Fichas & Trimestres ── -->
+<section class="card mb-8" id="fichas" aria-labelledby="fichas-gestora-heading">
+  <div class="gestora-section-heading">
+    <div>
+      <h2 class="card__title" id="fichas-gestora-heading">Fichas &amp; Trimestres</h2>
+      <p class="card__subtitle" id="fichas-gestora-subtitle">Fichas del trimestre seleccionado, organizadas por jornada.</p>
+    </div>
+  </div>
+
+  <div class="gestora-empty hidden" id="fichas-gestora-mensaje" role="status">
+    <strong>No hay fichas registradas.</strong>
+    <p>Las fichas se habilitan aquí a medida que la matrícula de cada trimestre se cierre.</p>
+  </div>
+
+  <div class="gestora-fichas-lista" id="fichas-gestora-lista">
+    <p class="gestora-loading">Cargando fichas…</p>
+  </div>
+</section>
+
+<!-- ── 2. Bandeja de solicitudes ── -->
 <section class="card mb-8" id="bandeja" aria-labelledby="bandeja-heading">
   <div class="gestora-section-heading">
     <div>
@@ -94,25 +113,6 @@
         <tr><td colspan="7" class="gestora-loading">Cargando solicitudes…</td></tr>
       </tbody>
     </table>
-  </div>
-</section>
-
-<!-- ── 2. Fichas & Trimestres ── -->
-<section class="card mb-8" id="fichas" aria-labelledby="fichas-gestora-heading">
-  <div class="gestora-section-heading">
-    <div>
-      <h2 class="card__title" id="fichas-gestora-heading">Fichas &amp; Trimestres</h2>
-      <p class="card__subtitle" id="fichas-gestora-subtitle">Fichas del trimestre seleccionado, organizadas por jornada.</p>
-    </div>
-  </div>
-
-  <div class="gestora-empty hidden" id="fichas-gestora-mensaje" role="status">
-    <strong>No hay fichas registradas.</strong>
-    <p>Las fichas se habilitan aquí a medida que la matrícula de cada trimestre se cierre.</p>
-  </div>
-
-  <div class="gestora-fichas-lista" id="fichas-gestora-lista">
-    <p class="gestora-loading">Cargando fichas…</p>
   </div>
 </section>
 
