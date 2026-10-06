@@ -252,28 +252,6 @@
   pointer-events: none;
 }
 
-/* ── Marca: Inglés fijo de una ficha del instructor (informativa) ── */
-.time-block--ingles { border-color: var(--blue-700); }
-
-.time-block__ingles {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  right: 4px;
-  padding: 1px var(--space-1);
-  overflow: hidden;
-  font-size: 0.625rem;
-  font-weight: 700;
-  line-height: 1.4;
-  text-align: center;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: var(--blue-700);
-  background: var(--blue-100);
-  border-radius: var(--radius-sm);
-  pointer-events: none;
-}
-
 /* ── Estado: SELECCIONADO ── */
 .time-block.selected {
   background: var(--sipa-verde-oscuro);
@@ -410,16 +388,6 @@
 .legend-swatch--excede {
   background: repeating-linear-gradient(-45deg, var(--sipa-rojo-tenue), var(--sipa-rojo-tenue) 3px, #fff 3px, #fff 6px);
   border: 1px dashed color-mix(in srgb, var(--sipa-rojo) 45%, #fff);
-}
-
-.legend-swatch--ingles {
-  display: inline-grid;
-  place-items: center;
-  font-size: 0.5rem;
-  font-weight: 700;
-  color: var(--blue-700);
-  background: var(--blue-100);
-  border-color: var(--blue-700);
 }
 
 .legend-swatch--deshabilitado {

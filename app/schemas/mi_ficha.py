@@ -46,7 +46,6 @@ class MiFicha(BaseModel):
     bloques_ideales: bool = Field(description="2 bloques seguidos el mismo día (regla blanda §3).")
     fecha_asignacion: date
     bloques_jornada: list[BloqueHorario]
-    bloque_ingles: BloqueLider | None = Field(default=None, description="Inglés fijo de la gestora (bloqueado).")
     instructores: list[InstructorDeFicha]
     huecos: list[HuecoDeFicha]
     transversales: list[TransversalDeFicha]

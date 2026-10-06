@@ -158,7 +158,7 @@ const crearFicha = (ficha) => {
   ingles.appendChild(crearElemento(
     'span',
     '',
-    ficha.bloque_ingles ? `🔒 Inglés · ${formatearBloque(ficha.bloque_ingles)}` : '🔒 Inglés sin franja',
+    ficha.bloque_ingles ? `🔒 Inglés · ${formatearBloque(ficha.bloque_ingles)} · cada semana` : '🔒 Inglés sin franja',
   ));
   const moverIngles = crearElemento('button', 'btn btn-ghost btn-xs', ficha.bloque_ingles ? 'Mover' : 'Fijar');
   moverIngles.type = 'button';
@@ -456,7 +456,7 @@ const abrirIngles = (ficha) => {
   obtenerElemento('ingles-dialogo-subtitulo').textContent =
     `${ficha.programa} · Jornada ${jornada} · Trimestre ${ficha.trimestre}`;
   obtenerElemento('ingles-ayuda').textContent =
-    `Elige un bloque de la jornada ${jornada}: ${jornada === 'Noche' ? '2 h' : '3 h'} semanales de Inglés.`;
+    `Elige un bloque de la jornada ${jornada}: ${jornada === 'Noche' ? '2 h' : '3 h'} de Inglés que se repiten todas las semanas del trimestre.`;
   obtenerElemento('ingles-guardar').disabled = true;
 
   mostrarErrorIngles();

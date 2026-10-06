@@ -116,14 +116,6 @@
   box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--sipa-verde-oscuro) 55%, transparent);
 }
 
-.mi-ficha-grilla__celda--ingles,
-.mi-ficha-muestra--ingles {
-  font-weight: 700;
-  color: var(--blue-700);
-  background: var(--blue-100);
-  border: 1px solid var(--blue-700);
-}
-
 .mi-ficha-grilla__celda--hueco {
   color: var(--sipa-rojo);
   background: repeating-linear-gradient(45deg, var(--sipa-rojo-tenue), var(--sipa-rojo-tenue) 5px, #fff 5px, #fff 10px);

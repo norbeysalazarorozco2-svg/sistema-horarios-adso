@@ -11,7 +11,7 @@ horas extra, transversales) siguen siendo de la gestora (reglas-negocio §8).
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.alertas import alertas_de_ficha, prioridad_de_trimestre
-from app.api.gestora import FICHAS_GESTORA_MOCK, INSTRUCTORES_GESTORA, bloque_ingles
+from app.api.gestora import FICHAS_GESTORA_MOCK, INSTRUCTORES_GESTORA
 from app.api.lideres import LIDERES_FICHA, bloques_ideales, bloques_permitidos, ficha_liderada_por
 from app.api.perfil import SOLICITUDES_TRANSVERSALES
 from app.core.security import require_instructor
@@ -71,7 +71,6 @@ def consultar_mi_ficha(usuario: dict = Depends(require_instructor)) -> MiFicha:
         bloques_ideales=bloques_ideales(registro["bloques"]),
         fecha_asignacion=registro["fecha_asignacion"],
         bloques_jornada=bloques_permitidos(ficha["jornada"]),
-        bloque_ingles=bloque_ingles(ficha["id"]),
         instructores=[
             InstructorDeFicha(id=i, nombre=nombres.get(i, f"Instructor {i}"), es_lider=i == instructor_id)
             for i in equipo

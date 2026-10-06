@@ -65,7 +65,6 @@ const renderSemana = (datos) => {
   if (!grilla) return;
 
   const lider = new Set(datos.bloques_lider.map(({ dia, bloque }) => `${dia}|${bloque}`));
-  const ingles = datos.bloque_ingles ? `${datos.bloque_ingles.dia}|${datos.bloque_ingles.bloque}` : null;
   const huecos = new Map();
   datos.huecos.filter((h) => h.estado !== 'cubierta').forEach((hueco) => hueco.bloques.map(separarBloque).forEach(({ dia, bloque }) => {
     huecos.set(`${dia}|${bloque}`, hueco.rap_nombre);
@@ -92,12 +91,7 @@ const renderSemana = (datos) => {
       const celda = crearElemento('span', 'mi-ficha-grilla__celda');
       celda.setAttribute('role', 'cell');
       let descripcion = 'libre';
-      if (clave === ingles) {
-        celda.classList.add('mi-ficha-grilla__celda--ingles');
-        celda.textContent = 'EN';
-        celda.title = 'Inglés fijo de la gestora';
-        descripcion = 'Inglés fijo, bloqueado';
-      } else if (lider.has(clave)) {
+      if (lider.has(clave)) {
         celda.classList.add('mi-ficha-grilla__celda--lider');
         celda.textContent = '★';
         descripcion = 'tu clase de líder';

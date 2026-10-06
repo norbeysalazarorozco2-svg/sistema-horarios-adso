@@ -204,10 +204,6 @@
       <span class="legend-swatch legend-swatch--deshabilitado" aria-hidden="true"></span>
       No disponible
     </div>
-    <div class="legend-item">
-      <span class="legend-swatch legend-swatch--ingles" aria-hidden="true">EN</span>
-      Inglés fijo de tu ficha
-    </div>
     <div class="legend-item legend-item--regla">
       <span aria-hidden="true">⏱️</span>
       Máximo 9 h continuas por día
@@ -268,7 +264,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-{# Inglés fijo de las fichas del instructor: se marca en la grilla (bloqueo por ficha). #}
-<script type="application/json" id="bloques-ingles">{{ bloques_ingles | tojson }}</script>
 <script src="{{ url_for('static', path='js/disponibilidad.js') }}" defer></script>
 {% endblock %}

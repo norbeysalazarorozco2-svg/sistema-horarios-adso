@@ -494,46 +494,9 @@ const guardarDisponibilidad = async () => {
    ═══════════════════════════════════════════════════════════ */
 
 /**
- * Marca las celdas donde alguna ficha del instructor tiene Inglés fijo.
- * El bloqueo es por ficha: la celda sigue seleccionable porque el instructor
- * puede dictar a otra ficha en ese horario, pero nunca a la que tiene Inglés.
- */
-const marcarIngles = () => {
-  let bloques = [];
-  try {
-    bloques = JSON.parse(document.getElementById('bloques-ingles')?.textContent || '[]');
-  } catch {
-    return;
-  }
-
-  const fichasPorCelda = new Map();
-  bloques.forEach(({ dia, bloque, ficha_id: fichaId }) => {
-    const clave = `${dia}|${bloque}`;
-    fichasPorCelda.set(clave, [...(fichasPorCelda.get(clave) || []), fichaId]);
-  });
-
-  fichasPorCelda.forEach((fichas, clave) => {
-    const [dia, bloque] = clave.split('|');
-    const celda = document.querySelector(`.time-block[data-dia="${dia}"][data-bloque="${bloque}"]`);
-    if (!celda) return;
-    const texto = fichas.length === 1 ? `Inglés · ${fichas[0]}` : `Inglés · ${fichas.length} fichas`;
-    const marca = document.createElement('span');
-    marca.className = 'time-block__ingles';
-    marca.setAttribute('aria-hidden', 'true');
-    marca.textContent = texto;
-    celda.classList.add('time-block--ingles');
-    celda.appendChild(marca);
-    celda.title = `Inglés fijo de la ficha ${fichas.join(', ')}. Aquí solo podrás dictar a otras fichas.`;
-    celda.setAttribute('aria-label', `${celda.getAttribute('aria-label')} (Inglés fijo de la ficha ${fichas.join(', ')})`);
-  });
-};
-
-/**
  * Inicializa todos los event listeners de la página.
  */
 const inicializar = () => {
-  marcarIngles();
-
   // ── Celdas de la grilla ──
   getBloques().forEach((celda) => {
     // Clic con ratón
