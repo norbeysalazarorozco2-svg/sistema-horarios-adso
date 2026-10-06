@@ -26,6 +26,23 @@
 Esto significa que el motor de asignación **no corre sobre la disponibilidad completa
 de la ficha**, sino sobre el "sobrante" después de las transversales.
 
+### Inglés — transversal fija
+
+La gestora fija Inglés en **todas las fichas, en todos los trimestres**, como parte del Paso 1:
+
+| Jornada de la ficha | Horas semanales | Bloque |
+|---|---|---|
+| Mañana (Diurna) | 3 h | un bloque de 3 h (06–09 o 09–12) |
+| Tarde | 3 h | un bloque de 3 h (12–15 o 15–18) |
+| Noche (Nocturna) | 2 h | un bloque de 2 h (18–20 o 20–22) |
+
+- El bloqueo es **por ficha**: ese bloque queda `bloqueado = true` para la ficha y no
+  se puede usar para formación técnica, para el bloque del líder ni para otro instructor
+  de esa ficha.
+- Un instructor de ADSO sí puede dictar a **otra** ficha en ese mismo horario.
+- Solo la gestora puede mover la franja (pantalla *Líderes de ficha*). No puede ponerla
+  sobre un bloque del líder de la ficha ni sobre el Inglés de otra ficha del mismo trimestre.
+
 ---
 
 ## 3. Líder de ficha — Regla blanda
