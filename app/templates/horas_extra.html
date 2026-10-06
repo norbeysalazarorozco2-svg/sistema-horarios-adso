@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Horas extra{% endblock %}
+{% block meta_description %}Solicitudes de horas extra de la gestora para cubrir RAP sin instructor.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/carga.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', path='css/horas_extra.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading horas-extra-heading">
+  <div>
+    <span class="page-heading__eyebrow">Instructor</span>
+    <h1 class="page-heading__title">Horas extra</h1>
+    <p class="page-heading__subtitle">Cuando un RAP queda sin instructor, la gestora puede pedirte cubrirlo con horas extra hasta 40 h. Tú decides si aceptas.</p>
+  </div>
+  <a class="btn btn-ghost" href="/perfil-instructor">← Mi perfil</a>
+</header>
+
+<div class="alert alert-error mb-6 hidden" id="horas-extra-error" role="alert"></div>
+
+<section class="card mb-6" aria-labelledby="carga-heading">
+  <h2 class="card__title" id="carga-heading">Tu carga actual</h2>
+  <div class="horas-extra-carga" id="horas-extra-carga">
+    <p class="horas-extra-nota">Cargando…</p>
+  </div>
+</section>
+
+<section class="card mb-6" aria-labelledby="pendientes-heading">
+  <h2 class="card__title" id="pendientes-heading">Pendientes de respuesta</h2>
+  <ul class="horas-extra-lista" id="horas-extra-pendientes" aria-labelledby="pendientes-heading"></ul>
+</section>
+
+<section class="card" aria-labelledby="historial-heading">
+  <h2 class="card__title" id="historial-heading">Historial</h2>
+  <ul class="horas-extra-historial" id="horas-extra-historial" aria-labelledby="historial-heading"></ul>
+</section>
+
+<div class="horas-extra-notificaciones" id="horas-extra-notificaciones" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/carga.js') }}" defer></script>
+<script src="{{ url_for('static', path='js/horas_extra.js') }}" defer></script>
+{% endblock %}
