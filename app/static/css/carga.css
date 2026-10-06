@@ -1,0 +1,101 @@
+/* ============================================================
+   CARGA.CSS — Indicador de carga horaria (js/carga.js)
+   ============================================================ */
+
+.carga {
+  --carga-color: var(--sipa-azul);
+  --carga-fondo: var(--sipa-azul-tenue);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.carga--rango  { --carga-color: var(--sena-verde); --carga-fondo: var(--sipa-verde-tenue); }
+.carga--tope   { --carga-color: var(--amber-600);  --carga-fondo: var(--sipa-ambar-tenue); }
+.carga--excede { --carga-color: var(--sipa-rojo);  --carga-fondo: var(--sipa-rojo-tenue); }
+
+.carga__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  margin: 0;
+}
+
+.carga__total {
+  font-family: var(--font-heading);
+  font-size: var(--sipa-texto-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--carga-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.carga__escala {
+  font-weight: 600;
+  color: var(--slate-500);
+}
+
+.carga__desglose {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--slate-600);
+}
+
+.carga__barra {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  overflow: hidden;
+  background: var(--sipa-gris-tenue);
+  border-radius: var(--radius-full);
+}
+
+.carga__segmento {
+  height: 100%;
+  transition: width var(--transition-slow);
+  animation: progreso-entrada 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.carga__segmento--formacion { background: var(--carga-color); }
+.carga__segmento--admin     { background: var(--slate-300); }
+
+.carga__marcas {
+  position: relative;
+  height: 1.25rem;
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+/* El texto queda a la izquierda de la marca para no salirse por el borde derecho. */
+.carga__marca {
+  position: absolute;
+  top: 0;
+  padding-top: 2px;
+  padding-right: 4px;
+  white-space: nowrap;
+  border-right: 1px solid var(--slate-400);
+  transform: translateX(-100%);
+}
+
+.carga__estado {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--sipa-texto);
+  background: var(--carga-fondo);
+  border-radius: var(--radius-sm);
+}
+
+.carga__estado strong {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .carga__desglose {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}
