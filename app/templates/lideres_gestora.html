@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Líderes de ficha{% endblock %}
+{% block meta_description %}Asignación del instructor líder de cada ficha y su bloque semanal, para la Gestora del SENA ADSO.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/lideres_gestora.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading lideres-heading">
+  <div>
+    <span class="page-heading__eyebrow">Gestora · Programación</span>
+    <h1 class="page-heading__title">Líderes de ficha</h1>
+    <p class="page-heading__subtitle">Cada ficha necesita un líder con al menos 1 clase semanal; lo ideal son 2 bloques seguidos el mismo día.</p>
+  </div>
+  <div class="page-heading__acciones">
+    <button type="button" class="btn btn-secondary" id="btn-actualizar">
+      <svg class="icono" aria-hidden="true" focusable="false"><use href="#i-flechas"></use></svg>
+      Actualizar
+    </button>
+  </div>
+</header>
+
+<div class="aviso lideres-aviso" id="lideres-aviso" role="status" aria-live="polite">
+  <p class="lideres-aviso__texto">Cargando fichas…</p>
+</div>
+
+<section class="card" aria-labelledby="lideres-heading">
+  <div class="card__cabecera">
+    <h2 class="card__title" id="lideres-heading">Fichas</h2>
+    <div class="chips-filtro" role="group" aria-label="Filtrar fichas">
+      <button type="button" class="chip-filtro lideres-chip lideres-chip--activo" data-filtro="sin-lider" aria-pressed="true">Sin líder</button>
+      <button type="button" class="chip-filtro lideres-chip" data-filtro="" aria-pressed="false">Todas</button>
+    </div>
+  </div>
+
+  <p class="estado-vacio lideres-vacio hidden" id="lideres-vacio" role="status"></p>
+  <ul class="lideres-lista" id="lideres-lista" aria-labelledby="lideres-heading"></ul>
+</section>
+
+<!-- ── Panel de asignación ── -->
+<dialog class="lider-dialogo" id="lider-dialogo" aria-labelledby="lider-dialogo-titulo">
+  <form class="lider-form" id="lider-form" method="dialog" novalidate>
+    <header class="lider-form__cabecera">
+      <div>
+        <h2 class="lider-form__titulo" id="lider-dialogo-titulo">Líder de la ficha</h2>
+        <p class="lider-form__subtitulo" id="lider-dialogo-subtitulo"></p>
+      </div>
+      <button type="button" class="lider-form__cerrar" data-cerrar aria-label="Cerrar">✕</button>
+    </header>
+
+    <fieldset class="lider-form__paso">
+      <legend class="lider-form__leyenda">1. Instructor líder</legend>
+      <div class="lider-instructores" id="lider-instructores"></div>
+    </fieldset>
+
+    <fieldset class="lider-form__paso">
+      <legend class="lider-form__leyenda">2. Bloque semanal con su ficha</legend>
+      <p class="lider-form__ayuda">Elige 1 o 2 bloques de la jornada de la ficha. El bloque de Inglés es fijo y no se puede usar.</p>
+      <div class="lider-grilla" id="lider-grilla" role="group" aria-label="Bloques semanales del líder"></div>
+      <p class="lider-regla" id="lider-regla" role="status" aria-live="polite"></p>
+    </fieldset>
+
+    <p class="lider-error hidden" id="lider-error" role="alert"></p>
+
+    <footer class="lider-form__pie">
+      <p class="lider-form__nota">El líder permanece fijo durante el trimestre. Solo la gestora lo aprueba.</p>
+      <div class="lider-form__acciones">
+        <button type="button" class="btn btn-danger btn-xs hidden" id="lider-quitar">Quitar líder</button>
+        <button type="button" class="btn btn-ghost" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="lider-guardar" disabled>Guardar líder</button>
+      </div>
+    </footer>
+  </form>
+</dialog>
+
+<!-- ── Panel del Inglés fijo ── -->
+<dialog class="lider-dialogo" id="ingles-dialogo" aria-labelledby="ingles-dialogo-titulo">
+  <form class="lider-form" id="ingles-form" method="dialog" novalidate>
+    <header class="lider-form__cabecera">
+      <div>
+        <h2 class="lider-form__titulo" id="ingles-dialogo-titulo">Inglés de la ficha</h2>
+        <p class="lider-form__subtitulo" id="ingles-dialogo-subtitulo"></p>
+      </div>
+      <button type="button" class="lider-form__cerrar" data-cerrar aria-label="Cerrar">✕</button>
+    </header>
+
+    <fieldset class="lider-form__paso">
+      <legend class="lider-form__leyenda">Franja semanal de Inglés</legend>
+      <p class="lider-form__ayuda" id="ingles-ayuda">Elige un bloque de la jornada de la ficha.</p>
+      <div class="lider-grilla lider-grilla--ingles" id="ingles-grilla" role="radiogroup" aria-label="Bloque de Inglés"></div>
+    </fieldset>
+
+    <p class="lider-error hidden" id="ingles-error" role="alert"></p>
+
+    <footer class="lider-form__pie">
+      <p class="lider-form__nota">El bloque queda bloqueado en la ficha: ni el líder ni el motor pueden usarlo.</p>
+      <div class="lider-form__acciones">
+        <button type="button" class="btn btn-ghost" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="ingles-guardar" disabled>Guardar franja</button>
+      </div>
+    </footer>
+  </form>
+</dialog>
+
+<div class="lideres-notificaciones" id="lideres-notificaciones" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/lideres_gestora.js') }}" defer></script>
+{% endblock %}
