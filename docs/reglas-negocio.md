@@ -36,12 +36,21 @@ La gestora fija Inglés en **todas las fichas, en todos los trimestres**, como p
 | Tarde | 3 h | un bloque de 3 h (12–15 o 15–18) |
 | Noche (Nocturna) | 2 h | un bloque de 2 h (18–20 o 20–22) |
 
+- Cada ficha recibe Inglés **exactamente una vez por semana** (un solo bloque). Una
+  solicitud de transversales que incluya Inglés no le abre un segundo bloque.
+- Por defecto, las fichas de un mismo trimestre y jornada tienen Inglés el mismo día
+  (martes), en bloques distintos, para que no quede repartido en varios días.
 - El bloqueo es **por ficha**: ese bloque queda `bloqueado = true` para la ficha y no
   se puede usar para formación técnica, para el bloque del líder ni para otro instructor
   de esa ficha.
 - Un instructor de ADSO sí puede dictar a **otra** ficha en ese mismo horario.
 - Solo la gestora puede mover la franja (pantalla *Líderes de ficha*). No puede ponerla
   sobre un bloque del líder de la ficha ni sobre el Inglés de otra ficha del mismo trimestre.
+- El bloque es **recurrente**: se repite igual todas las semanas del trimestre. La gestora
+  lo cambia o rota al configurar cada trimestre; al aprobarlo queda congelado hasta reabrirlo.
+- Solo se ve en las vistas de la gestora (Líderes y horario consolidado). Las pantallas del
+  instructor (Disponibilidad, Mi ficha) no muestran Inglés: el instructor marca su
+  disponibilidad de lunes a viernes sin avisos de transversales.
 
 ---
 
@@ -109,3 +118,24 @@ Si en un trimestre un instructor llegó a 40h para tapar un hueco, el sistema de
   campo `historial_carga`).
 - La prioridad de fichas (punto 4) debe traducirse en el motor como una restricción
   de mayor peso para fichas de 1º-5º trimestre frente a las de 6º-7º.
+
+---
+
+## 9. Generación automática del horario (MVP)
+
+La gestora elige el trimestre en su panel y pulsa **⚡ Generar horario automático**. El
+motor (`app/core/motor.py`, voraz; reemplazable por el de OR-Tools) programa **todas las
+fichas a la vez**, porque un instructor dicta en fichas de varios trimestres:
+
+1. Inglés fijo de cada ficha (bloqueado) con un instructor de Inglés libre.
+2. Bloques del líder de ficha.
+3. Transversales del plan del trimestre (Ética, SST, Matemáticas…) más las aprobadas.
+4. Formación técnica en el sobrante: competencia del instructor, **solo en franjas que él
+   marcó en Disponibilidad**, máximo 9 h continuas por día y tope de 33 h de formación.
+   Prioriza a quien ya dicta en la ficha y luego a quien tiene menos carga; quien debe
+   compensar carga (§6) va al final.
+
+Fichas de prioridad 1 se programan primero. Lo que no se puede programar queda como
+**pendiente** visible para la gestora. Cada sesión lleva ficha, competencia o transversal,
+instructor y ambiente. El instructor ve solo sus sesiones en **Mi horario**; la gestora
+ve el consolidado y lo filtra por trimestre, jornada o ficha.
