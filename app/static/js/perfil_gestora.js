@@ -20,6 +20,7 @@ let solicitudes = [];
 let trimestre = 1;
 let filtroEstado = '';
 let filtroJornada = 'todas';
+let filtroFicha = '';
 
 const formatearNumero = (valor) => Number(valor).toLocaleString('es-CO', {
   maximumFractionDigits: 1,
@@ -438,25 +439,75 @@ const renderFichas = (datos) => {
 
 /* ── Horarios ── */
 
+const renderEstadoHorario = (datos) => {
+  const estado = obtenerElemento('horario-estado');
+  const lista = obtenerElemento('horario-pendientes');
+  if (!estado || !lista) return;
+
+  const pendientes = datos.pendientes || [];
+  const altas = pendientes.filter((p) => p.prioridad === 1).length;
+  let nivel = 'info';
+  let texto = 'Aún no se ha generado el horario: solo se muestran los bloques fijos de Inglés. Pulsa «⚡ Generar horario automático».';
+  if (datos.generado) {
+    const fecha = new Date(datos.generado_en).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+    nivel = altas ? 'error' : pendientes.length ? 'aviso' : 'ok';
+    texto = pendientes.length
+      ? `Generado el ${fecha}. Quedan ${pendientes.length} pendiente(s) en este trimestre${altas ? `, ${altas} en fichas de prioridad alta` : ''}: revísalos en Alertas.`
+      : `Generado el ${fecha}. Todas las fichas de este trimestre quedaron completas.`;
+  }
+  estado.className = `aviso aviso--${nivel} gestora-generacion`;
+  estado.textContent = texto;
+
+  lista.replaceChildren(...pendientes.map((p) => crearElemento(
+    'li',
+    `gestora-pendiente${p.prioridad === 1 ? ' gestora-pendiente--alta' : ''}`,
+    `Ficha ${p.ficha_id} · ${p.materia} · ${formatearNumero(p.horas)} h — ${p.motivo}`,
+  )));
+  lista.classList.toggle('hidden', pendientes.length === 0);
+};
+
 const renderHorarios = (datos) => {
   const grilla = obtenerElemento('gestora-grid');
   const subtitulo = obtenerElemento('horarios-subtitle');
   if (!grilla) return;
 
   if (subtitulo) {
-    subtitulo.textContent = `${datos.total_asignaciones} asignaciones · ${formatearNumero(datos.horas_asignadas)} h · ${datos.huecos} bloques libres`;
+    const alcance = datos.ficha_id ? `Ficha ${datos.ficha_id}` : `Trimestre ${datos.trimestre}`;
+    subtitulo.textContent = `${alcance} · ${datos.total_asignaciones} clases semanales · ${formatearNumero(datos.horas_asignadas)} h`;
   }
 
-  dibujarGrillaHorario(grilla, datos, datos.asignaciones || []);
+  renderEstadoHorario(datos);
+  dibujarGrillaHorario(grilla, datos, datos.asignaciones || [], Boolean(datos.ficha_id));
 };
 
-/* Dibuja la cuadrícula días × bloques con las asignaciones recibidas (ya filtradas si aplica). */
-const dibujarGrillaHorario = (grilla, datos, asignaciones) => {
+/* El filtro de ficha ofrece las fichas del trimestre seleccionado. */
+const renderFiltroFicha = (items) => {
+  const selector = obtenerElemento('filtro-ficha');
+  if (!selector) return;
+  const ids = (items || []).map((ficha) => String(ficha.id));
+  if (!ids.includes(filtroFicha)) filtroFicha = '';
+  selector.replaceChildren(
+    crearElemento('option', '', 'Todas las fichas'),
+    ...(items || []).map((ficha) => {
+      const opcion = crearElemento('option', '', `Ficha ${ficha.id} · ${nombreJornada(ficha.jornada)}`);
+      opcion.value = String(ficha.id);
+      return opcion;
+    }),
+  );
+  selector.firstChild.value = '';
+  selector.value = filtroFicha;
+};
+
+/* Dibuja la cuadrícula días × bloques. Varias fichas pueden compartir franja:
+   cada celda lista todas sus clases. `detallada` (una sola ficha) muestra más datos. */
+const dibujarGrillaHorario = (grilla, datos, asignaciones, detallada = false) => {
   grilla.replaceChildren();
 
-  const indice = new Map(
-    asignaciones.map((item) => [`${item.dia}|${item.bloque}`, item]),
-  );
+  const indice = new Map();
+  asignaciones.forEach((item) => {
+    const clave = `${item.dia}|${item.bloque}`;
+    indice.set(clave, [...(indice.get(clave) || []), item]);
+  });
 
   grilla.appendChild(crearElemento('div', 'gestora-grid__head gestora-grid__head--libre'));
   datos.dias.forEach((dia) => {
@@ -484,8 +535,7 @@ const dibujarGrillaHorario = (grilla, datos, asignaciones) => {
 
     (datos.dias || []).forEach((diaCorto) => {
       const dia = diaCompleto(diaCorto);
-      const asignacion = indice.get(`${dia}|${bloque}`);
-      grilla.appendChild(crearCeldaHorario(asignacion, diaCorto, bloque));
+      grilla.appendChild(crearCeldaHorario(indice.get(`${dia}|${bloque}`) || [], diaCorto, bloque, detallada));
     });
   });
 };
@@ -507,39 +557,43 @@ const COMPLETOS = {
 
 const diaCompleto = (diaCorto) => COMPLETOS[diaCorto] || String(diaCorto).toUpperCase();
 
-const crearCeldaHorario = (asignacion, diaCorto, bloque) => {
+const CLASE_SESION = {
+  ingles: 'gestora-sesion--fija',
+  transversal: 'gestora-sesion--transversal',
+  lider: 'gestora-sesion--materia',
+  tecnica: 'gestora-sesion--materia',
+};
+
+const crearSesionHorario = (asignacion, detallada) => {
+  const sesion = crearElemento('div', `gestora-sesion ${CLASE_SESION[asignacion.tipo] || CLASE_SESION.tecnica}`);
+  const materia = asignacion.bloqueado ? `🔒 ${asignacion.materia} · semanal` : (asignacion.materia || '');
+  const instructor = asignacion.instructor?.nombre || 'Sin instructor';
+  sesion.appendChild(crearElemento('span', 'gestora-sesion__ficha', `Ficha ${asignacion.ficha_id}`));
+  sesion.appendChild(crearElemento('span', 'gestora-sesion__detalle', materia));
+  if (detallada) {
+    sesion.appendChild(crearElemento('span', 'gestora-sesion__detalle', instructor));
+    if (asignacion.aula) sesion.appendChild(crearElemento('span', 'gestora-sesion__aula', asignacion.aula));
+  }
+  sesion.title = [`Ficha ${asignacion.ficha_id}`, asignacion.materia, instructor, asignacion.aula].filter(Boolean).join(' · ');
+  return sesion;
+};
+
+const crearCeldaHorario = (asignaciones, diaCorto, bloque, detallada = false) => {
   const celda = document.createElement('div');
   celda.className = 'gestora-celda';
   celda.setAttribute('role', 'gridcell');
 
-  if (!asignacion) {
+  if (asignaciones.length === 0) {
     celda.textContent = 'Libre';
     celda.setAttribute('aria-label', `${diaCorto} ${bloque} libre`);
     return celda;
   }
 
-  if (asignacion.bloqueado) {
-    celda.classList.add('gestora-celda--fija');
-    celda.appendChild(crearElemento('span', 'gestora-celda__ficha', `Ficha ${asignacion.ficha_id}`));
-    celda.appendChild(crearElemento('span', 'gestora-celda__detalle', `🔒 ${asignacion.transversal} · fijo`));
-    celda.setAttribute(
-      'aria-label',
-      `${diaCorto} ${bloque}: ficha ${asignacion.ficha_id}, ${asignacion.transversal} fijo, bloqueado`,
-    );
-    return celda;
-  }
-
-  celda.classList.add(
-    asignacion.transversal ? 'gestora-celda--transversal' : 'gestora-celda--materia',
-  );
-  celda.appendChild(crearElemento('span', 'gestora-celda__ficha', `Ficha ${asignacion.ficha_id}`));
-  if (asignacion.transversal) {
-    celda.appendChild(crearElemento('span', 'gestora-celda__detalle', asignacion.transversal));
-  }
-  celda.appendChild(crearElemento('span', 'gestora-celda__detalle', asignacion.instructor?.nombre || 'Sin instructor'));
+  celda.classList.add('gestora-celda--ocupada');
+  asignaciones.forEach((asignacion) => celda.appendChild(crearSesionHorario(asignacion, detallada)));
   celda.setAttribute(
     'aria-label',
-    `${diaCorto} ${bloque}: ficha ${asignacion.ficha_id}, ${asignacion.instructor?.nombre || 'sin instructor'}`,
+    `${diaCorto} ${bloque}: ${asignaciones.map((a) => `ficha ${a.ficha_id}, ${a.materia || ''}, ${a.instructor?.nombre || 'sin instructor'}${a.aula ? `, ${a.aula}` : ''}`).join('; ')}`,
   );
   return celda;
 };
@@ -665,7 +719,7 @@ const seccionHorario = ({ trimestres, filtrar, descripcion }) => {
       const grilla = crearElemento('div', 'gestora-grid');
       grilla.setAttribute('role', 'grid');
       grilla.setAttribute('aria-label', `Horario de ${descripcion}, Trimestre ${numero}`);
-      dibujarGrillaHorario(grilla, datos, asignaciones);
+      dibujarGrillaHorario(grilla, datos, asignaciones, true);
       envoltura.appendChild(grilla);
       const leyenda = document.querySelector('#horarios .gestora-leyenda');
       if (leyenda) envoltura.appendChild(leyenda.cloneNode(true));
@@ -1042,13 +1096,49 @@ const cargarFichas = async () => {
   const datos = await pedir(`/api/v1/gestora/fichas?trimestre=${trimestre}`);
   renderSelectorTrimestres(datos.trimestres, datos.trimestre);
   renderFichas(datos);
+  renderFiltroFicha(datos.items);
 };
 
 const cargarHorarios = async () => {
-  const datos = await pedir(
-    `/api/v1/gestora/horarios?trimestre=${trimestre}&jornada=${encodeURIComponent(filtroJornada)}`,
-  );
-  renderHorarios(datos);
+  const parametros = new URLSearchParams({ trimestre: String(trimestre), jornada: filtroJornada });
+  if (filtroFicha) parametros.set('ficha', filtroFicha);
+  renderHorarios(await pedir(`/api/v1/gestora/horarios?${parametros}`));
+};
+
+/* ⚡ Generar horario automático: el motor programa todas las fichas a la vez. */
+const generarHorario = async () => {
+  const boton = obtenerElemento('btn-generar-horario');
+  if (boton) {
+    boton.disabled = true;
+    boton.textContent = '⏳ Generando…';
+  }
+  ocultarError();
+  try {
+    const respuesta = await fetch('/api/v1/gestora/horarios/generar', {
+      method: 'POST',
+      headers: obtenerHeaders(),
+      credentials: 'same-origin',
+    });
+    const datos = await respuesta.json().catch(() => null);
+    if (!respuesta.ok) throw new Error(extraerDetalle(datos));
+
+    const altas = datos.pendientes_prioridad_alta;
+    mostrarToast(
+      altas ? 'error' : 'success',
+      'Horario generado',
+      `${datos.total_sesiones} clases semanales en ${datos.fichas} fichas · ${formatearNumero(datos.horas_programadas)} h.`
+        + (datos.pendientes.length ? ` ${datos.pendientes.length} pendiente(s)${altas ? `, ${altas} de prioridad alta` : ''}.` : ''),
+    );
+    consultas.horarios.clear();
+    await cargarHorarios();
+  } catch (error) {
+    mostrarError(error.message || 'No fue posible generar el horario.');
+  } finally {
+    if (boton) {
+      boton.disabled = false;
+      boton.textContent = '⚡ Generar horario automático';
+    }
+  }
 };
 
 const cargarTodo = async () => {
@@ -1089,6 +1179,11 @@ const inicializar = () => {
 
   selectorTrimestre?.addEventListener('change', cambiarTrimestre);
   obtenerElemento('btn-actualizar')?.addEventListener('click', cargarTodo);
+  obtenerElemento('btn-generar-horario')?.addEventListener('click', generarHorario);
+  obtenerElemento('filtro-ficha')?.addEventListener('change', (evento) => {
+    filtroFicha = evento.currentTarget.value;
+    cargarHorarios().catch((error) => mostrarError(error.message));
+  });
   obtenerElemento('btn-cancelar-resolver')?.addEventListener('click', cerrarModal);
   obtenerElemento('form-resolver')?.addEventListener('submit', resolverSolicitud);
   obtenerElemento('gestora-modal')?.addEventListener('click', (evento) => {

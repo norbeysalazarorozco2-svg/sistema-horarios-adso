@@ -20,12 +20,13 @@
   </div>
   <div class="gestora-header-actions">
     <div class="form-group">
-      <label class="form-label" for="selector-trimestre">Trimestre</label>
+      <label class="form-label" for="selector-trimestre">Trimestre del programa</label>
       <select class="form-input" id="selector-trimestre">
-        {# Las demás opciones las arma perfil_gestora.js con los trimestres del programa. #}
+        {# Las demás opciones las arma perfil_gestora.js con los trimestres del programa (1–9). #}
         <option value="{{ trimestre_actual }}" selected>Trimestre {{ trimestre_actual }}</option>
       </select>
     </div>
+    <button type="button" class="btn btn-primary btn-generar" id="btn-generar-horario">⚡ Generar horario automático</button>
     <button type="button" class="btn btn-secondary" id="btn-actualizar">🔄 Actualizar</button>
   </div>
 </header>
@@ -132,16 +133,25 @@
 <section class="card" id="horarios" data-vista="trimestres" aria-labelledby="horarios-heading">
   <div class="gestora-section-heading">
     <div>
-      <h2 class="card__title" id="horarios-heading">Horarios</h2>
+      <h2 class="card__title" id="horarios-heading">Horario consolidado</h2>
       <p class="card__subtitle" id="horarios-subtitle">Mapa de clases asignadas por bloque horario.</p>
     </div>
-    <div class="gestora-filtros" role="group" aria-label="Filtrar horarios por jornada">
-      <button type="button" class="chip chip--activo" data-jornada="todas">Todas</button>
-      <button type="button" class="chip" data-jornada="Mañana">Mañana</button>
-      <button type="button" class="chip" data-jornada="Tarde">Tarde</button>
-      <button type="button" class="chip" data-jornada="Noche">Noche</button>
+    <div class="gestora-horario-filtros">
+      <div class="gestora-filtros" role="group" aria-label="Filtrar horarios por jornada">
+        <button type="button" class="chip chip--activo" data-jornada="todas">Todas</button>
+        <button type="button" class="chip" data-jornada="Mañana">Mañana</button>
+        <button type="button" class="chip" data-jornada="Tarde">Tarde</button>
+        <button type="button" class="chip" data-jornada="Noche">Noche</button>
+      </div>
+      <label class="sr-only" for="filtro-ficha">Filtrar por ficha</label>
+      <select class="form-input gestora-filtro-ficha" id="filtro-ficha">
+        <option value="">Todas las fichas</option>
+      </select>
     </div>
   </div>
+
+  <div class="aviso gestora-generacion" id="horario-estado" role="status" aria-live="polite"></div>
+  <ul class="gestora-pendientes hidden" id="horario-pendientes" aria-label="Lo que el motor no pudo programar"></ul>
 
   <div class="gestora-grid-wrapper">
     <div class="gestora-grid" role="grid" aria-label="Horario del trimestre" id="gestora-grid">
@@ -151,7 +161,7 @@
     <div class="gestora-leyenda" role="note" aria-label="Leyenda del horario">
       <div class="leyenda-item">
         <span class="leyenda-swatch leyenda-swatch--materia" aria-hidden="true"></span>
-        Materia
+        Formación técnica
       </div>
       <div class="leyenda-item">
         <span class="leyenda-swatch leyenda-swatch--transversal" aria-hidden="true"></span>
@@ -159,7 +169,7 @@
       </div>
       <div class="leyenda-item">
         <span class="leyenda-swatch leyenda-swatch--fija" aria-hidden="true"></span>
-        Inglés fijo (bloqueado)
+        Inglés fijo semanal (bloqueado)
       </div>
       <div class="leyenda-item">
         <span class="leyenda-swatch leyenda-swatch--libre" aria-hidden="true"></span>

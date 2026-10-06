@@ -20,6 +20,42 @@
   min-width: 180px;
 }
 
+.btn-generar { font-weight: 700; }
+
+/* ── Horario consolidado: filtros, estado y pendientes ── */
+.gestora-horario-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.gestora-filtro-ficha { width: auto; min-width: 200px; }
+
+.gestora-generacion { margin-bottom: var(--space-4); }
+
+.gestora-pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.gestora-pendiente {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--sipa-ambar);
+  border-radius: var(--radius-sm);
+  background: var(--sipa-ambar-tenue);
+}
+
+.gestora-pendiente--alta {
+  border-left-color: var(--sipa-rojo);
+  background: var(--sipa-rojo-tenue);
+}
+
 /* ── Panel: acciones y consultas ── */
 .gestora-panel {
   display: flex;
@@ -594,12 +630,54 @@
   color: var(--blue-700);
 }
 
+/* Celda con clases: cada ficha es una tarjeta (varias fichas pueden compartir franja). */
+.gestora-celda--ocupada {
+  gap: 4px;
+  padding: 4px;
+  border-style: solid;
+  border-color: var(--color-border);
+  background: var(--sipa-fondo);
+}
+
+.gestora-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+.gestora-sesion--materia {
+  background: var(--sipa-verde-tenue);
+  border: 1px solid var(--sipa-verde-borde);
+  color: var(--sipa-verde-oscuro);
+}
+
+.gestora-sesion--transversal {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  color: var(--blue-700);
+}
+
 /* Inglés fijo de la gestora: bloqueado, no es variable del motor. */
-.gestora-celda--fija {
+.gestora-sesion--fija {
   background: var(--blue-100);
   border: 1px solid var(--blue-700);
   color: var(--blue-700);
 }
+
+.gestora-sesion__ficha { font-weight: 700; }
+
+.gestora-sesion__detalle,
+.gestora-sesion__aula {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gestora-sesion__aula { opacity: 0.8; }
 
 .gestora-celda__ficha {
   font-weight: 700;
