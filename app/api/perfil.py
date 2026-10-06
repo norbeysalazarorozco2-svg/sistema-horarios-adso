@@ -42,11 +42,16 @@ COMPETENCIAS_JAVIER = [
     },
 ]
 
+COMP_ANALISIS, COMP_DISENO, COMP_WEB = COMPETENCIAS_JAVIER
+
 PERFILES_MOCK: dict[str, dict] = {
     "101": {
         "competencias": COMPETENCIAS_JAVIER,
         "turnos_preferidos": ["Mañana", "Tarde"],
     },
+    "103": {"competencias": [COMP_ANALISIS, COMP_WEB], "turnos_preferidos": ["Mañana"]},
+    "104": {"competencias": [COMP_DISENO, COMP_WEB], "turnos_preferidos": ["Mañana", "Tarde"]},
+    "105": {"competencias": COMPETENCIAS_JAVIER, "turnos_preferidos": ["Mañana", "Tarde", "Noche"]},
 }
 
 FICHAS_MOCK: dict[str, list[dict]] = {
@@ -66,6 +71,86 @@ FICHAS_MOCK: dict[str, list[dict]] = {
             "trimestre": 3,
             "competencias": COMPETENCIAS_JAVIER[2:],
             "horas_semanales": 16.0,
+        },
+    ],
+    # Las fichas coinciden con FICHAS_GESTORA_MOCK y las horas suman la carga
+    # base de CARGA_INSTRUCTORES_MOCK (app/api/alertas.py): 32, 33 y 36 h.
+    "103": [
+        {
+            "id": 3365101,
+            "programa": "ADSO",
+            "jornada": "Diurna",
+            "trimestre": 1,
+            "competencias": [COMP_ANALISIS],
+            "horas_semanales": 12.0,
+        },
+        {
+            "id": 3365200,
+            "programa": "ADSO",
+            "jornada": "Diurna",
+            "trimestre": 4,
+            "competencias": [COMP_ANALISIS, COMP_WEB],
+            "horas_semanales": 10.0,
+        },
+        {
+            "id": 3365230,
+            "programa": "ADSO",
+            "jornada": "Diurna",
+            "trimestre": 5,
+            "competencias": [COMP_WEB],
+            "horas_semanales": 10.0,
+        },
+    ],
+    "104": [
+        {
+            "id": 3365130,
+            "programa": "ADSO",
+            "jornada": "Diurna",
+            "trimestre": 2,
+            "competencias": [COMP_DISENO, COMP_WEB],
+            "horas_semanales": 12.0,
+        },
+        {
+            "id": 3365200,
+            "programa": "ADSO",
+            "jornada": "Diurna",
+            "trimestre": 4,
+            "competencias": [COMP_WEB],
+            "horas_semanales": 11.0,
+        },
+        {
+            "id": 3365260,
+            "programa": "ADSO",
+            "jornada": "Diurna",
+            "trimestre": 6,
+            "competencias": [COMP_DISENO],
+            "horas_semanales": 10.0,
+        },
+    ],
+    "105": [
+        {
+            "id": 3365102,
+            "programa": "ADSO",
+            "jornada": "Diurna",
+            "trimestre": 1,
+            "competencias": [COMP_WEB],
+            "horas_semanales": 12.0,
+        },
+        {
+            "id": 3365131,
+            "programa": "ADSO",
+            "jornada": "Tarde",
+            "trimestre": 2,
+            "competencias": [COMP_ANALISIS],
+            "horas_semanales": 12.0,
+        },
+        {
+            "id": 3365201,
+            "programa": "ADSO",
+            "jornada": "Nocturna",
+            "trimestre": 4,
+            "competencias": [COMP_DISENO],
+            "horas_semanales": 12.0,
         },
     ],
 }
@@ -195,6 +280,13 @@ def cambiar_modo_prueba(
     return RespuestaModoPrueba(modo=datos.modo)
 
 
+def _horas_extra(instructor_id: int) -> float:
+    # Import diferido: app.api.alertas depende (vía gestora) de este módulo.
+    from app.api.alertas import horas_extra_aceptadas
+
+    return horas_extra_aceptadas(instructor_id)
+
+
 @router.get(
     "/perfil",
     response_model=PerfilInstructor,
@@ -219,6 +311,7 @@ def consultar_perfil(usuario: dict = Depends(require_instructor)) -> PerfilInstr
         competencias=competencias,
         fichas=fichas,
         horas_semanales=sum(ficha.horas_semanales for ficha in fichas),
+        horas_extra_autorizadas=0 if es_nuevo else _horas_extra(instructor_id),
         solicitudes_transversales=solicitudes,
         modo_prueba=modo,
     )

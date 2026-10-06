@@ -32,6 +32,30 @@ USUARIOS_MOCK = [
         "password_hash": get_password_hash("Clave123!"),
         "fecha_ingreso": date.today().isoformat(),
     },
+    {
+        "id": 103,
+        "correo_sena": "sospina@sena.edu.co",
+        "nombre": "Sandra Ospina",
+        "rol": RolEnum.INSTRUCTOR,
+        "password_hash": get_password_hash("Clave123!"),
+        "fecha_ingreso": "2021-03-15",
+    },
+    {
+        "id": 104,
+        "correo_sena": "avillalba@sena.edu.co",
+        "nombre": "Andrés Villalba",
+        "rol": RolEnum.INSTRUCTOR,
+        "password_hash": get_password_hash("Clave123!"),
+        "fecha_ingreso": "2024-01-08",
+    },
+    {
+        "id": 105,
+        "correo_sena": "mduarte@sena.edu.co",
+        "nombre": "Marcela Duarte",
+        "rol": RolEnum.INSTRUCTOR,
+        "password_hash": get_password_hash("Clave123!"),
+        "fecha_ingreso": "2020-07-01",
+    },
 ]
 
 

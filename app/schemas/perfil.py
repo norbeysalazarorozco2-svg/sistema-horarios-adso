@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.core.carga import HORAS_ADMINISTRATIVAS
+
 
 ModoPrueba = Literal["nuevo", "antiguo"]
 
@@ -55,7 +57,11 @@ class PerfilInstructor(BaseModel):
     antiguedad_dias: int = Field(ge=0)
     competencias: list[CompetenciaPerfil] = Field(default_factory=list)
     fichas: list[FichaAsignada] = Field(default_factory=list)
-    horas_semanales: float = Field(ge=0)
+    horas_semanales: float = Field(ge=0, description="Horas de formación asignadas por semana.")
+    horas_administrativas: float = Field(default=HORAS_ADMINISTRATIVAS, ge=0)
+    horas_extra_autorizadas: float = Field(
+        default=0, ge=0, description="Horas extra aceptadas para cubrir huecos (hasta 40 h).",
+    )
     solicitudes_transversales: list[SolicitudTransversal] = Field(default_factory=list)
     modo_prueba: ModoPrueba = "antiguo"
 
