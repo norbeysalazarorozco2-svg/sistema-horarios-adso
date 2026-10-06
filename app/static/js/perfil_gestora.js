@@ -2,7 +2,7 @@
 
 /* ============================================================
    PERFIL_GESTORA.JS — Vista independiente de la Gestora
-   Bandeja de solicitudes · Fichas & Trimestres · Horarios
+   Acciones: Solicitudes · Consultas: Trimestres, Fichas, Instructores, Jornadas
    ============================================================ */
 
 const obtenerElemento = (id) => document.getElementById(id);
@@ -105,30 +105,68 @@ const pedir = async (ruta) => {
   return datos;
 };
 
-/* ── Resumen ── */
+/* ── Encabezado y acción de solicitudes ── */
 
 const renderResumen = (perfil) => {
   const nombre = obtenerElemento('gestora-nombre');
   const correo = obtenerElemento('gestora-correo');
   const trimestreBadge = obtenerElemento('gestora-trimestre-badge');
-  const vencidasBadge = obtenerElemento('gestora-vencidas-badge');
-  const abiertas = obtenerElemento('resumen-abiertas');
-  const vencidas = obtenerElemento('resumen-vencidas');
-  const fichas = obtenerElemento('resumen-fichas');
-  const horas = obtenerElemento('resumen-horas');
+  const pendientes = obtenerElemento('accion-solicitudes-total');
+  const vencidas = obtenerElemento('accion-solicitudes-vencidas');
 
   if (nombre) nombre.textContent = perfil.nombre;
   if (correo) correo.textContent = perfil.correo_sena || 'Correo no registrado';
   if (trimestreBadge) trimestreBadge.textContent = `Trimestre ${perfil.trimestre_actual}`;
-  if (abiertas) abiertas.textContent = formatearNumero(perfil.solicitudes_abiertas);
+  if (pendientes) pendientes.textContent = `(${formatearNumero(perfil.solicitudes_abiertas)})`;
   if (vencidas) {
-    vencidas.textContent = formatearNumero(perfil.solicitudes_vencidas);
-    vencidas.classList.toggle('is-critico', perfil.solicitudes_vencidas > 0);
+    const total = perfil.solicitudes_vencidas;
+    vencidas.textContent = `${formatearNumero(total)} ${total === 1 ? 'vencida' : 'vencidas'}`;
+    vencidas.classList.toggle('hidden', total === 0);
   }
-  if (fichas) fichas.textContent = formatearNumero(perfil.fichas_activas);
-  if (horas) horas.textContent = `${formatearNumero(perfil.horas_asignadas)} h`;
-  if (vencidasBadge) vencidasBadge.classList.toggle('hidden', perfil.solicitudes_vencidas === 0);
 };
+
+/* ── Navegación por vistas: una sola acción o consulta visible a la vez ── */
+
+const VISTA_INICIAL = 'trimestres';
+
+/* Las anclas anteriores siguen llevando a la vista que las reemplaza. */
+const ALIAS_VISTAS = {
+  bandeja: 'solicitudes',
+  horarios: 'trimestres',
+};
+
+const vistasDisponibles = () => new Set(
+  [...document.querySelectorAll('section[data-vista]')].map((seccion) => seccion.dataset.vista),
+);
+
+const vistaDesdeHash = () => {
+  const clave = decodeURIComponent(window.location.hash.slice(1)).trim().toLowerCase();
+  const vista = ALIAS_VISTAS[clave] || clave;
+  return vistasDisponibles().has(vista) ? vista : VISTA_INICIAL;
+};
+
+const mostrarVista = (vista) => {
+  document.querySelectorAll('section[data-vista]').forEach((seccion) => {
+    seccion.classList.toggle('hidden', seccion.dataset.vista !== vista);
+  });
+  document.querySelectorAll('a[data-vista-destino]').forEach((enlace) => {
+    const activa = enlace.dataset.vistaDestino === vista;
+    enlace.classList.toggle('is-activa', activa);
+    if (activa) enlace.setAttribute('aria-current', 'page');
+    else enlace.removeAttribute('aria-current');
+  });
+};
+
+const aplicarHash = () => {
+  const vista = vistaDesdeHash();
+  if (window.location.hash && window.location.hash !== `#${vista}`) {
+    history.replaceState(null, '', `#${vista}`);
+  }
+  mostrarVista(vista);
+  return vista;
+};
+
+const sincronizarVista = () => prepararConsulta(aplicarHash());
 
 /* ── Bandeja de solicitudes ── */
 
@@ -255,8 +293,20 @@ const ICONOS_JORNADA = {
 
 const claveJornada = (jornada) => String(jornada || '').trim().toLowerCase();
 
-/* La API reporta la jornada de la mañana como "Diurna"; en pantalla se muestra "Mañana". */
-const nombreJornada = (jornada) => (claveJornada(jornada) === 'diurna' ? 'Mañana' : jornada);
+/* La interfaz solo usa Mañana, Tarde y Noche; los datos pueden traer "Diurna" o "Nocturna".
+   Un valor desconocido se muestra tal cual para no ocultar fichas. */
+const JORNADAS_INTERFAZ = {
+  diurna: 'Mañana',
+  mañana: 'Mañana',
+  manana: 'Mañana',
+  tarde: 'Tarde',
+  nocturna: 'Noche',
+  noche: 'Noche',
+};
+const JORNADAS_BASE = ['Mañana', 'Tarde', 'Noche'];
+
+const nombreJornada = (jornada) => JORNADAS_INTERFAZ[claveJornada(jornada)]
+  || String(jornada || '').trim();
 
 const compararJornadas = (a, b) => {
   const indice = (jornada) => {
@@ -397,9 +447,13 @@ const renderHorarios = (datos) => {
     subtitulo.textContent = `${datos.total_asignaciones} asignaciones · ${formatearNumero(datos.horas_asignadas)} h · ${datos.huecos} bloques libres`;
   }
 
+  dibujarGrillaHorario(grilla, datos, datos.asignaciones || []);
+};
+
+/* Dibuja la cuadrícula días × bloques con las asignaciones recibidas (ya filtradas si aplica). */
+const dibujarGrillaHorario = (grilla, datos, asignaciones) => {
   grilla.replaceChildren();
 
-  const asignaciones = datos.asignaciones || [];
   const indice = new Map(
     asignaciones.map((item) => [`${item.dia}|${item.bloque}`, item]),
   );
@@ -449,8 +503,6 @@ const COMPLETOS = {
   Mie: 'MIERCOLES',
   Jue: 'JUEVES',
   Vie: 'VIERNES',
-  Sáb: 'SABADO',
-  Sab: 'SABADO',
 };
 
 const diaCompleto = (diaCorto) => COMPLETOS[diaCorto] || String(diaCorto).toUpperCase();
@@ -463,6 +515,17 @@ const crearCeldaHorario = (asignacion, diaCorto, bloque) => {
   if (!asignacion) {
     celda.textContent = 'Libre';
     celda.setAttribute('aria-label', `${diaCorto} ${bloque} libre`);
+    return celda;
+  }
+
+  if (asignacion.bloqueado) {
+    celda.classList.add('gestora-celda--fija');
+    celda.appendChild(crearElemento('span', 'gestora-celda__ficha', `Ficha ${asignacion.ficha_id}`));
+    celda.appendChild(crearElemento('span', 'gestora-celda__detalle', `🔒 ${asignacion.transversal} · fijo`));
+    celda.setAttribute(
+      'aria-label',
+      `${diaCorto} ${bloque}: ficha ${asignacion.ficha_id}, ${asignacion.transversal} fijo, bloqueado`,
+    );
     return celda;
   }
 
@@ -479,6 +542,373 @@ const crearCeldaHorario = (asignacion, diaCorto, bloque) => {
     `${diaCorto} ${bloque}: ficha ${asignacion.ficha_id}, ${asignacion.instructor?.nombre || 'sin instructor'}`,
   );
   return celda;
+};
+
+/* ── Consultas: Fichas, Instructores y Jornadas ── */
+
+/* Datos cargados bajo demanda al abrir cada consulta; "Actualizar" los invalida. */
+const consultas = {
+  fichas: null,
+  instructores: null,
+  horarios: new Map(),
+  fichaEnFichas: null,
+  fichaEnJornadas: null,
+  instructor: null,
+  jornada: null,
+};
+
+const normalizarTexto = (texto) => String(texto ?? '')
+  .normalize('NFD')
+  .replace(/[̀-ͯ]/g, '')
+  .toLowerCase();
+
+const coincideBusqueda = (busqueda, ...campos) => {
+  const termino = normalizarTexto(busqueda).trim();
+  return !termino || normalizarTexto(campos.join(' ')).includes(termino);
+};
+
+/* La API entrega las fichas por trimestre: se piden todos los trimestres del programa. */
+const cargarFichasPrograma = async () => {
+  if (consultas.fichas) return consultas.fichas;
+  const primera = await pedir('/api/v1/gestora/fichas');
+  const restantes = await Promise.all(
+    (primera.trimestres || [])
+      .filter((numero) => numero !== primera.trimestre)
+      .map((numero) => pedir(`/api/v1/gestora/fichas?trimestre=${numero}`)),
+  );
+  consultas.fichas = [primera, ...restantes]
+    .flatMap((datos) => datos.items || [])
+    .sort((a, b) => a.trimestre - b.trimestre || a.id - b.id);
+  return consultas.fichas;
+};
+
+const cargarInstructores = async () => {
+  if (!consultas.instructores) {
+    consultas.instructores = (await pedir('/api/v1/gestora/instructores')).items || [];
+  }
+  return consultas.instructores;
+};
+
+const horarioDelTrimestre = async (numero) => {
+  if (!consultas.horarios.has(numero)) {
+    consultas.horarios.set(numero, await pedir(`/api/v1/gestora/horarios?trimestre=${numero}`));
+  }
+  return consultas.horarios.get(numero);
+};
+
+const filaConsulta = (titulo, detalle, seleccionada, alElegir) => {
+  const item = document.createElement('li');
+  const boton = crearElemento('button', `gestora-fila${seleccionada ? ' is-seleccionada' : ''}`);
+  boton.type = 'button';
+  boton.setAttribute('aria-pressed', String(seleccionada));
+  boton.appendChild(crearElemento('span', 'gestora-fila__titulo', titulo));
+  boton.appendChild(crearElemento('span', 'gestora-fila__detalle', detalle));
+  boton.addEventListener('click', alElegir);
+  item.appendChild(boton);
+  return item;
+};
+
+const resumenFicha = (ficha) => [
+  ficha.programa,
+  `Trimestre ${ficha.trimestre}`,
+  nombreJornada(ficha.jornada) || 'Sin jornada',
+  ficha.estado,
+].join(' · ');
+
+const enfocarDetalle = (detalle) => {
+  if (window.matchMedia('(max-width: 900px)').matches) {
+    detalle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
+
+/* "Ver horario": cuadrícula de un solo trimestre con las asignaciones filtradas.
+   Con varios trimestres se ofrece un selector limitado a ellos; nunca se mezclan. */
+const seccionHorario = ({ trimestres, filtrar, descripcion }) => {
+  const seccion = crearElemento('div', 'gestora-detalle__horario');
+  const acciones = crearElemento('div', 'gestora-detalle__acciones');
+  const boton = crearElemento('button', 'btn btn-secondary', 'Ver horario');
+  boton.type = 'button';
+  boton.setAttribute('aria-expanded', 'false');
+  acciones.appendChild(boton);
+
+  let selector = null;
+  if (trimestres.length > 1) {
+    selector = crearElemento('select', 'form-input');
+    selector.setAttribute('aria-label', 'Trimestre del horario');
+    trimestres.forEach((numero) => {
+      const opcion = crearElemento('option', '', `Trimestre ${numero}`);
+      opcion.value = String(numero);
+      selector.appendChild(opcion);
+    });
+    acciones.appendChild(selector);
+  } else {
+    acciones.appendChild(crearElemento('span', 'gestora-nota', `Trimestre ${trimestres[0]}`));
+  }
+  seccion.appendChild(acciones);
+
+  const contenido = crearElemento('div', 'gestora-detalle__horario-contenido hidden');
+  seccion.appendChild(contenido);
+
+  const mostrar = async () => {
+    const numero = Number(selector?.value ?? trimestres[0]);
+    contenido.replaceChildren(crearElemento('p', 'gestora-loading', 'Cargando horario…'));
+    try {
+      const datos = await horarioDelTrimestre(numero);
+      const asignaciones = (datos.asignaciones || []).filter(filtrar);
+      const resumen = asignaciones.length > 0
+        ? `${descripcion} · Trimestre ${numero} · ${asignaciones.length} ${asignaciones.length === 1 ? 'bloque asignado' : 'bloques asignados'}`
+        : `${descripcion} no tiene bloques asignados en el horario del Trimestre ${numero}.`;
+      contenido.replaceChildren(crearElemento('p', 'gestora-nota', resumen));
+      if (asignaciones.length === 0) return;
+
+      const envoltura = crearElemento('div', 'gestora-grid-wrapper');
+      const grilla = crearElemento('div', 'gestora-grid');
+      grilla.setAttribute('role', 'grid');
+      grilla.setAttribute('aria-label', `Horario de ${descripcion}, Trimestre ${numero}`);
+      dibujarGrillaHorario(grilla, datos, asignaciones);
+      envoltura.appendChild(grilla);
+      const leyenda = document.querySelector('#horarios .gestora-leyenda');
+      if (leyenda) envoltura.appendChild(leyenda.cloneNode(true));
+      contenido.appendChild(envoltura);
+    } catch (error) {
+      contenido.replaceChildren(crearElemento('p', 'gestora-nota', error.message || 'No fue posible cargar el horario.'));
+    }
+  };
+
+  boton.addEventListener('click', () => {
+    const abrir = contenido.classList.contains('hidden');
+    contenido.classList.toggle('hidden', !abrir);
+    boton.textContent = abrir ? 'Ocultar horario' : 'Ver horario';
+    boton.setAttribute('aria-expanded', String(abrir));
+    if (abrir) mostrar();
+  });
+  selector?.addEventListener('change', () => {
+    if (!contenido.classList.contains('hidden')) mostrar();
+  });
+  return seccion;
+};
+
+const renderDetalleFicha = (contenedor, ficha) => {
+  contenedor.dataset.seleccion = ficha ? String(ficha.id) : '';
+  if (!ficha) {
+    contenedor.replaceChildren(crearElemento('p', 'gestora-detalle__vacio', 'Selecciona una ficha para ver su detalle.'));
+    return;
+  }
+  const tarjeta = crearElemento('ul', 'gestora-jornada__fichas');
+  tarjeta.appendChild(tarjetaFicha(ficha));
+  contenedor.replaceChildren(
+    crearElemento('p', 'gestora-detalle__contexto', `Trimestre ${ficha.trimestre}`),
+    tarjeta,
+    seccionHorario({
+      trimestres: [ficha.trimestre],
+      filtrar: (asignacion) => asignacion.ficha_id === ficha.id,
+      descripcion: `Ficha ${ficha.id}`,
+    }),
+  );
+};
+
+/* Solo se vuelve a dibujar el detalle si cambió la selección, para no cerrar el horario al buscar. */
+const actualizarDetalleFicha = (contenedor, ficha) => {
+  if (contenedor.dataset.seleccion !== (ficha ? String(ficha.id) : '')) renderDetalleFicha(contenedor, ficha);
+};
+
+const renderConsultaFichas = () => {
+  const lista = obtenerElemento('consulta-fichas-lista');
+  const detalle = obtenerElemento('consulta-fichas-detalle');
+  const mensaje = obtenerElemento('consulta-fichas-mensaje');
+  const subtitulo = obtenerElemento('consulta-fichas-subtitle');
+  if (!lista || !detalle || !consultas.fichas) return;
+
+  const busqueda = obtenerElemento('buscar-fichas')?.value || '';
+  const visibles = consultas.fichas.filter((ficha) => coincideBusqueda(
+    busqueda, ficha.id, ficha.programa, nombreJornada(ficha.jornada), `trimestre ${ficha.trimestre}`, ficha.estado,
+  ));
+
+  if (subtitulo) subtitulo.textContent = `${visibles.length} de ${textoFichas(consultas.fichas.length)} del programa.`;
+  mensaje?.classList.toggle('hidden', visibles.length > 0);
+  lista.replaceChildren(...visibles.map((ficha) => filaConsulta(
+    `Ficha ${ficha.id}`,
+    resumenFicha(ficha),
+    ficha.id === consultas.fichaEnFichas,
+    () => {
+      consultas.fichaEnFichas = ficha.id;
+      renderConsultaFichas();
+      enfocarDetalle(detalle);
+    },
+  )));
+  actualizarDetalleFicha(detalle, consultas.fichas.find((ficha) => ficha.id === consultas.fichaEnFichas));
+};
+
+const renderDetalleInstructor = (contenedor, instructor) => {
+  contenedor.dataset.seleccion = instructor ? String(instructor.id) : '';
+  if (!instructor) {
+    contenedor.replaceChildren(crearElemento('p', 'gestora-detalle__vacio', 'Selecciona un instructor para ver su detalle.'));
+    return;
+  }
+
+  const tarjeta = crearElemento('div', 'gestora-ficha');
+  const cabecera = crearElemento('div', 'gestora-ficha__cabecera');
+  cabecera.appendChild(bloqueInstructor(instructor));
+  if (instructor.es_nuevo) cabecera.appendChild(crearElemento('span', 'badge badge-nuevo', 'Instructor nuevo'));
+  tarjeta.appendChild(cabecera);
+
+  const campos = crearElemento('div', 'gestora-ficha__campos');
+  campos.appendChild(campoFicha('Fecha de ingreso', crearElemento('span', '', formatearFecha(instructor.fecha_ingreso))));
+  const jornadas = [...new Set(instructor.fichas.map((ficha) => nombreJornada(ficha.jornada) || 'Sin jornada'))]
+    .sort(compararJornadas);
+  campos.appendChild(campoFicha('Jornadas', crearElemento('span', '', jornadas.join(', ') || '—')));
+
+  const fichas = crearElemento('div', 'gestora-ficha__instructores');
+  if (instructor.fichas.length === 0) {
+    fichas.appendChild(crearElemento('span', 'text-muted', 'Sin fichas asignadas'));
+  } else {
+    instructor.fichas.forEach((ficha) => {
+      fichas.appendChild(crearElemento(
+        'span',
+        'gestora-nota gestora-nota--fuerte',
+        `Ficha ${ficha.id} · Trimestre ${ficha.trimestre} · ${nombreJornada(ficha.jornada) || 'Sin jornada'}`,
+      ));
+    });
+  }
+  campos.appendChild(campoFicha('Fichas', fichas));
+  tarjeta.appendChild(campos);
+
+  const trimestres = [...new Set(instructor.fichas.map((ficha) => ficha.trimestre))].sort((a, b) => a - b);
+  contenedor.replaceChildren(
+    tarjeta,
+    trimestres.length > 0
+      ? seccionHorario({
+        trimestres,
+        filtrar: (asignacion) => asignacion.instructor?.id === instructor.id,
+        descripcion: instructor.nombre,
+      })
+      : crearElemento('p', 'gestora-nota', 'Sin fichas asignadas: no hay horario para mostrar.'),
+  );
+};
+
+const renderConsultaInstructores = () => {
+  const lista = obtenerElemento('consulta-instructores-lista');
+  const detalle = obtenerElemento('consulta-instructores-detalle');
+  const mensaje = obtenerElemento('consulta-instructores-mensaje');
+  const subtitulo = obtenerElemento('consulta-instructores-subtitle');
+  if (!lista || !detalle || !consultas.instructores) return;
+
+  const busqueda = obtenerElemento('buscar-instructores')?.value || '';
+  const visibles = consultas.instructores.filter((instructor) => coincideBusqueda(
+    busqueda, instructor.nombre, instructor.correo_sena, ...instructor.fichas.map((ficha) => ficha.id),
+  ));
+
+  if (subtitulo) {
+    const total = consultas.instructores.length;
+    subtitulo.textContent = `${visibles.length} de ${total} ${total === 1 ? 'instructor vinculado' : 'instructores vinculados'}.`;
+  }
+  mensaje?.classList.toggle('hidden', visibles.length > 0);
+  lista.replaceChildren(...visibles.map((instructor) => filaConsulta(
+    instructor.nombre,
+    `${instructor.correo_sena || 'Sin correo'} · ${textoFichas(instructor.fichas.length)}`,
+    instructor.id === consultas.instructor,
+    () => {
+      consultas.instructor = instructor.id;
+      renderConsultaInstructores();
+      enfocarDetalle(detalle);
+    },
+  )));
+
+  const seleccionado = consultas.instructores.find((instructor) => instructor.id === consultas.instructor);
+  if (detalle.dataset.seleccion !== (seleccionado ? String(seleccionado.id) : '')) {
+    renderDetalleInstructor(detalle, seleccionado);
+  }
+};
+
+const renderConsultaJornadas = () => {
+  const opciones = obtenerElemento('consulta-jornadas-opciones');
+  const lista = obtenerElemento('consulta-jornadas-lista');
+  const detalle = obtenerElemento('consulta-jornadas-detalle');
+  const mensaje = obtenerElemento('consulta-jornadas-mensaje');
+  const instructores = obtenerElemento('consulta-jornadas-instructores');
+  if (!opciones || !lista || !detalle || !consultas.fichas) return;
+
+  const grupos = new Map(JORNADAS_BASE.map((jornada) => [jornada, []]));
+  consultas.fichas.forEach((ficha) => {
+    const jornada = nombreJornada(ficha.jornada) || 'Sin jornada';
+    if (!grupos.has(jornada)) grupos.set(jornada, []);
+    grupos.get(jornada).push(ficha);
+  });
+
+  opciones.replaceChildren(...[...grupos.entries()]
+    .sort(([a], [b]) => compararJornadas(a, b))
+    .map(([jornada, fichas]) => {
+      const activa = jornada === consultas.jornada;
+      const boton = crearElemento('button', `chip${activa ? ' chip--activo' : ''}`, `${jornada} (${fichas.length})`);
+      boton.type = 'button';
+      boton.setAttribute('aria-pressed', String(activa));
+      boton.addEventListener('click', () => {
+        consultas.jornada = jornada;
+        consultas.fichaEnJornadas = null;
+        renderConsultaJornadas();
+      });
+      return boton;
+    }));
+
+  const fichas = grupos.get(consultas.jornada) || [];
+  if (mensaje) {
+    mensaje.textContent = consultas.jornada
+      ? `No hay fichas en la jornada ${consultas.jornada}.`
+      : 'Selecciona una jornada para ver sus fichas.';
+    mensaje.classList.toggle('hidden', fichas.length > 0);
+  }
+  if (instructores) {
+    const nombres = [...new Set(fichas.flatMap((ficha) => ficha.instructores.map((instructor) => instructor.nombre)))]
+      .sort((a, b) => a.localeCompare(b, 'es'));
+    instructores.textContent = nombres.length > 0 ? `Instructores en esta jornada: ${nombres.join(', ')}.` : '';
+    instructores.classList.toggle('hidden', nombres.length === 0);
+  }
+  lista.replaceChildren(...fichas.map((ficha) => filaConsulta(
+    `Ficha ${ficha.id}`,
+    resumenFicha(ficha),
+    ficha.id === consultas.fichaEnJornadas,
+    () => {
+      consultas.fichaEnJornadas = ficha.id;
+      renderConsultaJornadas();
+      enfocarDetalle(detalle);
+    },
+  )));
+  actualizarDetalleFicha(detalle, fichas.find((ficha) => ficha.id === consultas.fichaEnJornadas));
+};
+
+const CONSULTAS_BAJO_DEMANDA = {
+  fichas: async () => {
+    await cargarFichasPrograma();
+    renderConsultaFichas();
+  },
+  instructores: async () => {
+    await cargarInstructores();
+    renderConsultaInstructores();
+  },
+  jornadas: async () => {
+    await cargarFichasPrograma();
+    renderConsultaJornadas();
+  },
+};
+
+const prepararConsulta = async (vista) => {
+  const preparar = CONSULTAS_BAJO_DEMANDA[vista];
+  if (!preparar) return;
+  try {
+    await preparar();
+  } catch (error) {
+    mostrarError(error.message || 'No fue posible cargar la consulta.');
+  }
+};
+
+const invalidarConsultas = () => {
+  consultas.fichas = null;
+  consultas.instructores = null;
+  consultas.horarios.clear();
+  ['consulta-fichas-detalle', 'consulta-instructores-detalle', 'consulta-jornadas-detalle'].forEach((id) => {
+    const detalle = obtenerElemento(id);
+    if (detalle) detalle.dataset.seleccion = '';
+  });
 };
 
 /* ── Resolución de solicitudes ── */
@@ -623,10 +1053,17 @@ const cargarHorarios = async () => {
 
 const cargarTodo = async () => {
   ocultarError();
+  invalidarConsultas();
   const boton = obtenerElemento('btn-actualizar');
   if (boton) boton.disabled = true;
   try {
-    await Promise.all([cargarPerfil(), cargarBandeja(), cargarFichas(), cargarHorarios()]);
+    await Promise.all([
+      cargarPerfil(),
+      cargarBandeja(),
+      cargarFichas(),
+      cargarHorarios(),
+      prepararConsulta(vistaDesdeHash()),
+    ]);
   } catch (error) {
     mostrarError(error.message || 'No fue posible cargar la información.');
     mostrarToast('error', 'Error al cargar', error.message || 'Intenta nuevamente.');
@@ -672,6 +1109,13 @@ const inicializar = () => {
   document.querySelectorAll('.chip[data-jornada]').forEach((chip) => {
     chip.addEventListener('click', () => filtrarJornada(chip));
   });
+
+  obtenerElemento('buscar-fichas')?.addEventListener('input', renderConsultaFichas);
+  obtenerElemento('buscar-instructores')?.addEventListener('input', renderConsultaInstructores);
+
+  /* La consulta activa se carga dentro de cargarTodo(); los cambios de hash la cargan después. */
+  window.addEventListener('hashchange', sincronizarVista);
+  aplicarHash();
 
   cargarTodo();
 };

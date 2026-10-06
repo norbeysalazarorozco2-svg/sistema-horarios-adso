@@ -102,6 +102,11 @@ const renderResumen = (datos) => {
   }
   if (fichasCount) fichasCount.textContent = formatearNumero(datos.fichas.length);
   if (horas) horas.textContent = `${formatearNumero(datos.horas_semanales)} h`;
+  window.SIPA?.carga?.render(
+    obtenerElemento('carga-indicador'),
+    datos.horas_semanales + (datos.horas_extra_autorizadas ?? 0),
+    datos.horas_administrativas,
+  );
   if (competenciasCount) competenciasCount.textContent = formatearNumero(datos.competencias.length);
   if (antiguedad) {
     antiguedad.textContent = datos.antiguedad_dias > 0

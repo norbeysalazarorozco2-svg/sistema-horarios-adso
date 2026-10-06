@@ -14,7 +14,6 @@
     <div class="flex items-center gap-3 flex-wrap mb-4">
       <span class="badge badge-accent">Gestora</span>
       <span class="badge badge-primary" id="gestora-trimestre-badge">Trimestre —</span>
-      <span class="badge badge-nuevo hidden" id="gestora-vencidas-badge">Solicitudes vencidas</span>
     </div>
     <h1 class="page-heading__title" id="gestora-nombre">{{ gestora_nombre or 'Gestora' }}</h1>
     <p class="page-heading__subtitle" id="gestora-correo">Coordinación de fichas, transversales y horarios.</p>
@@ -33,28 +32,44 @@
 
 <div class="alert alert-error mb-6" id="gestora-error" role="alert" hidden></div>
 
-<!-- ── Resumen operativo ── -->
-<section class="gestora-resumen" aria-label="Resumen de la gestión">
-  <div class="gestora-resumen__item">
-    <span class="gestora-resumen__label">Solicitudes abiertas</span>
-    <strong class="gestora-resumen__valor" id="resumen-abiertas">—</strong>
+<!-- ── Panel: acciones pendientes y consultas (una vista a la vez) ── -->
+<nav class="gestora-panel" aria-label="Panel de la Gestora">
+  <div class="gestora-panel__grupo">
+    <span class="gestora-panel__titulo" id="gestora-panel-acciones">Acciones</span>
+    <div class="gestora-panel__opciones" role="group" aria-labelledby="gestora-panel-acciones">
+      <a class="gestora-accion" href="#solicitudes" data-vista-destino="solicitudes">
+        <span aria-hidden="true">📥</span>
+        <span>Solicitudes pendientes <strong id="accion-solicitudes-total">(—)</strong></span>
+        <span class="badge badge-nuevo hidden" id="accion-solicitudes-vencidas"></span>
+      </a>
+    </div>
   </div>
-  <div class="gestora-resumen__item">
-    <span class="gestora-resumen__label">Vencidas</span>
-    <strong class="gestora-resumen__valor gestora-resumen__valor--alerta" id="resumen-vencidas">—</strong>
-  </div>
-  <div class="gestora-resumen__item">
-    <span class="gestora-resumen__label">Fichas del trimestre</span>
-    <strong class="gestora-resumen__valor" id="resumen-fichas">—</strong>
-  </div>
-  <div class="gestora-resumen__item">
-    <span class="gestora-resumen__label">Horas asignadas</span>
-    <strong class="gestora-resumen__valor" id="resumen-horas">—</strong>
-  </div>
-</section>
 
-<!-- ── 1. Fichas & Trimestres ── -->
-<section class="card mb-8" id="fichas" aria-labelledby="fichas-gestora-heading">
+  <div class="gestora-panel__grupo gestora-panel__grupo--consultas">
+    <span class="gestora-panel__titulo" id="gestora-panel-consultas">Consultas</span>
+    <div class="gestora-consultas" role="group" aria-labelledby="gestora-panel-consultas">
+      <a class="gestora-consulta" href="#trimestres" data-vista-destino="trimestres">
+        <span class="gestora-consulta__icono" aria-hidden="true">📅</span>
+        <span>Trimestres</span>
+      </a>
+      <a class="gestora-consulta" href="#fichas" data-vista-destino="fichas">
+        <span class="gestora-consulta__icono" aria-hidden="true">🗂️</span>
+        <span>Fichas</span>
+      </a>
+      <a class="gestora-consulta" href="#instructores" data-vista-destino="instructores">
+        <span class="gestora-consulta__icono" aria-hidden="true">🧑‍🏫</span>
+        <span>Instructores</span>
+      </a>
+      <a class="gestora-consulta" href="#jornadas" data-vista-destino="jornadas">
+        <span class="gestora-consulta__icono" aria-hidden="true">🕘</span>
+        <span>Jornadas</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Consulta: Trimestres (fichas del trimestre) ── -->
+<section class="card mb-8" id="trimestres-fichas" data-vista="trimestres" aria-labelledby="fichas-gestora-heading">
   <div class="gestora-section-heading">
     <div>
       <h2 class="card__title" id="fichas-gestora-heading">Fichas &amp; Trimestres</h2>
@@ -72,8 +87,8 @@
   </div>
 </section>
 
-<!-- ── 2. Bandeja de solicitudes ── -->
-<section class="card mb-8" id="bandeja" aria-labelledby="bandeja-heading">
+<!-- ── Acción: Solicitudes (bandeja) ── -->
+<section class="card mb-8 hidden" id="bandeja" data-vista="solicitudes" aria-labelledby="bandeja-heading">
   <div class="gestora-section-heading">
     <div>
       <h2 class="card__title" id="bandeja-heading">Bandeja de Solicitudes</h2>
@@ -113,8 +128,8 @@
   </div>
 </section>
 
-<!-- ── 3. Horarios ── -->
-<section class="card" id="horarios" aria-labelledby="horarios-heading">
+<!-- ── Consulta: Trimestres (horario del trimestre; se mantiene por ahora) ── -->
+<section class="card" id="horarios" data-vista="trimestres" aria-labelledby="horarios-heading">
   <div class="gestora-section-heading">
     <div>
       <h2 class="card__title" id="horarios-heading">Horarios</h2>
@@ -143,9 +158,92 @@
         Transversal
       </div>
       <div class="leyenda-item">
+        <span class="leyenda-swatch leyenda-swatch--fija" aria-hidden="true"></span>
+        Inglés fijo (bloqueado)
+      </div>
+      <div class="leyenda-item">
         <span class="leyenda-swatch leyenda-swatch--libre" aria-hidden="true"></span>
         Bloque libre
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Consulta: Fichas (todas las fichas del programa) ── -->
+<section class="card mb-8 hidden" id="consulta-fichas" data-vista="fichas" aria-labelledby="consulta-fichas-heading">
+  <div class="gestora-section-heading">
+    <div>
+      <h2 class="card__title" id="consulta-fichas-heading">Fichas</h2>
+      <p class="card__subtitle" id="consulta-fichas-subtitle">Fichas del programa en todos sus trimestres.</p>
+    </div>
+  </div>
+
+  <div class="gestora-consulta-layout">
+    <div class="gestora-consulta-lista">
+      <div class="form-group">
+        <label class="form-label" for="buscar-fichas">Buscar ficha</label>
+        <input class="form-input" id="buscar-fichas" type="search" autocomplete="off"
+               placeholder="Número, programa, jornada o trimestre" />
+      </div>
+      <p class="gestora-nota hidden" id="consulta-fichas-mensaje" role="status">No hay fichas que coincidan con la búsqueda.</p>
+      <ul class="gestora-filas" id="consulta-fichas-lista" aria-label="Fichas del programa">
+        <li class="gestora-loading">Cargando fichas…</li>
+      </ul>
+    </div>
+    <div class="gestora-detalle" id="consulta-fichas-detalle">
+      <p class="gestora-detalle__vacio">Selecciona una ficha para ver su detalle.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Consulta: Instructores ── -->
+<section class="card mb-8 hidden" id="consulta-instructores" data-vista="instructores" aria-labelledby="consulta-instructores-heading">
+  <div class="gestora-section-heading">
+    <div>
+      <h2 class="card__title" id="consulta-instructores-heading">Instructores</h2>
+      <p class="card__subtitle" id="consulta-instructores-subtitle">Instructores vinculados a la Gestora.</p>
+    </div>
+  </div>
+
+  <div class="gestora-consulta-layout">
+    <div class="gestora-consulta-lista">
+      <div class="form-group">
+        <label class="form-label" for="buscar-instructores">Buscar instructor</label>
+        <input class="form-input" id="buscar-instructores" type="search" autocomplete="off"
+               placeholder="Nombre, correo o número de ficha" />
+      </div>
+      <p class="gestora-nota hidden" id="consulta-instructores-mensaje" role="status">No hay instructores que coincidan con la búsqueda.</p>
+      <ul class="gestora-filas" id="consulta-instructores-lista" aria-label="Instructores vinculados">
+        <li class="gestora-loading">Cargando instructores…</li>
+      </ul>
+    </div>
+    <div class="gestora-detalle" id="consulta-instructores-detalle">
+      <p class="gestora-detalle__vacio">Selecciona un instructor para ver su detalle.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Consulta: Jornadas ── -->
+<section class="card mb-8 hidden" id="consulta-jornadas" data-vista="jornadas" aria-labelledby="consulta-jornadas-heading">
+  <div class="gestora-section-heading">
+    <div>
+      <h2 class="card__title" id="consulta-jornadas-heading">Jornadas</h2>
+      <p class="card__subtitle">Fichas del programa según su jornada.</p>
+    </div>
+  </div>
+
+  <div class="gestora-filtros gestora-jornadas-opciones" id="consulta-jornadas-opciones" role="group" aria-label="Elegir jornada">
+    <span class="gestora-loading">Cargando jornadas…</span>
+  </div>
+
+  <div class="gestora-consulta-layout">
+    <div class="gestora-consulta-lista">
+      <p class="gestora-nota" id="consulta-jornadas-mensaje" role="status">Selecciona una jornada para ver sus fichas.</p>
+      <p class="gestora-nota gestora-nota--fuerte hidden" id="consulta-jornadas-instructores"></p>
+      <ul class="gestora-filas" id="consulta-jornadas-lista" aria-label="Fichas de la jornada"></ul>
+    </div>
+    <div class="gestora-detalle" id="consulta-jornadas-detalle">
+      <p class="gestora-detalle__vacio">Selecciona una ficha para ver su detalle.</p>
     </div>
   </div>
 </section>

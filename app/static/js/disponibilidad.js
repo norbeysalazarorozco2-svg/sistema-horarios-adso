@@ -8,7 +8,7 @@
  *  1. Mantener el estado de bloques seleccionados en memoria.
  *  2. Toggle de la clase `.selected` al hacer clic / Enter en celdas.
  *  3. Dinámica de RAPs según la competencia seleccionada.
- *  4. Validar competencia, RAP y mínimo un bloque antes de enviar.
+ *  4. Validar competencia, RAP, mínimo un bloque y máximo 9 h continuas por día.
  *  5. Enviar el payload JSON al endpoint POST /api/v1/instructor/disponibilidad.
  *  6. Mostrar notificaciones tipo toast sin recargar la página.
  * ─────────────────────────────────────────────────────────────
@@ -22,6 +22,9 @@
 
 /** @type {Set<string>}  Claves únicas: `"DIA|BLOQUE"` */
 const estadoSeleccionado = new Set();
+
+/** Máximo de horas continuas por día (docs/reglas-negocio.md §1, app/core/carga.py). */
+const MAX_HORAS_CONTINUAS_DIA = 9;
 
 /** Mapa de RAPs por código de competencia (datos de demostración) */
 const RAPS_POR_COMPETENCIA = {
@@ -93,13 +96,89 @@ const apiHeaders = () => {
  */
 const buildKey = (dia, bloque) => `${dia}|${bloque}`;
 
+/** @param {string} hora - "HH:MM" */
+const aMinutos = (hora) => {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + m;
+};
+
+/**
+ * Mayor tramo continuo (en horas) de los bloques seleccionados de un día.
+ * Dos bloques son continuos cuando uno termina donde empieza el otro.
+ * @param {string} dia
+ * @param {Iterable<string>} claves - Claves `"DIA|BLOQUE"`.
+ * @returns {number}
+ */
+const horasContinuasMaximas = (dia, claves) => {
+  const intervalos = [...claves]
+    .map((key) => key.split('|'))
+    .filter(([d]) => d === dia)
+    .map(([, bloque]) => bloque.split('-').map(aMinutos))
+    .sort((a, b) => a[0] - b[0]);
+
+  let maximo = 0;
+  let tramoInicio = null;
+  let tramoFin = null;
+  intervalos.forEach(([inicio, fin]) => {
+    if (tramoFin !== null && inicio <= tramoFin) {
+      tramoFin = Math.max(tramoFin, fin);
+    } else {
+      tramoInicio = inicio;
+      tramoFin = fin;
+    }
+    maximo = Math.max(maximo, tramoFin - tramoInicio);
+  });
+  return maximo / 60;
+};
+
 /**
  * Actualiza el contador visual de bloques seleccionados.
  */
 const actualizarContador = () => {
   const contador = getContador();
-  if (!contador) return;
-  contador.textContent = estadoSeleccionado.size;
+  if (contador) contador.textContent = estadoSeleccionado.size;
+
+  const horas = document.getElementById('contador-horas');
+  if (horas) {
+    const total = [...estadoSeleccionado].reduce((suma, key) => {
+      const [inicio, fin] = key.split('|')[1].split('-').map(aMinutos);
+      return suma + (fin - inicio) / 60;
+    }, 0);
+    horas.textContent = total.toLocaleString('es-CO', { maximumFractionDigits: 1 });
+  }
+
+  actualizarLimiteDiario();
+};
+
+/**
+ * Indicadores del límite de 9 h continuas: medidor en la cabecera de cada
+ * día y aviso en los bloques libres que lo superarían si se marcaran.
+ */
+const actualizarLimiteDiario = () => {
+  document.querySelectorAll('[data-dia-cabecera]').forEach((cabecera) => {
+    const dia = cabecera.dataset.diaCabecera;
+    const continuas = horasContinuasMaximas(dia, estadoSeleccionado);
+    const porcentaje = Math.min(continuas / MAX_HORAS_CONTINUAS_DIA, 1) * 100;
+
+    cabecera.style.setProperty('--valor', `${porcentaje}%`);
+    cabecera.classList.toggle('dia--cerca', continuas >= 6 && continuas < MAX_HORAS_CONTINUAS_DIA);
+    cabecera.classList.toggle('dia--limite', continuas >= MAX_HORAS_CONTINUAS_DIA);
+    const texto = cabecera.querySelector('.dia__horas');
+    if (texto) texto.textContent = `${continuas} / ${MAX_HORAS_CONTINUAS_DIA} h`;
+  });
+
+  getBloques().forEach((celda) => {
+    const key = buildKey(celda.dataset.dia, celda.dataset.bloque);
+    const excede = !estadoSeleccionado.has(key)
+      && !celda.classList.contains('disabled')
+      && horasContinuasMaximas(celda.dataset.dia, [...estadoSeleccionado, key]) > MAX_HORAS_CONTINUAS_DIA;
+    celda.classList.toggle('excede-limite', excede);
+    if (excede) {
+      celda.title = 'Superaría 9 h continuas en el día';
+    } else {
+      celda.removeAttribute('title');
+    }
+  });
 };
 
 const ocultarSiguiente = () => {
@@ -136,6 +215,20 @@ const toggleBloque = (celda) => {
     celda.classList.remove('selected');
     celda.setAttribute('aria-pressed', 'false');
   } else {
+    const continuas = horasContinuasMaximas(dia, [...estadoSeleccionado, key]);
+    if (continuas > MAX_HORAS_CONTINUAS_DIA) {
+      celda.classList.remove('rechazado');
+      void celda.offsetWidth; // reinicia la animación si se repite el clic
+      celda.classList.add('rechazado');
+      setTimeout(() => celda.classList.remove('rechazado'), 1200);
+      mostrarToast(
+        'error',
+        'Máximo 9 horas continuas',
+        `Con este bloque tendrías ${continuas} h seguidas el ${celda.getAttribute('aria-label').split(' ')[0].toLowerCase()}. Deja un bloque libre entre medio.`,
+        6000
+      );
+      return;
+    }
     estadoSeleccionado.add(key);
     celda.classList.add('selected');
     celda.setAttribute('aria-pressed', 'true');
@@ -363,7 +456,10 @@ const guardarDisponibilidad = async () => {
         mostrarSiguiente();
       }
     } else {
-      const detalle = datos?.detail ?? 'Ocurrió un error en el servidor.';
+      // Los errores de validación de FastAPI llegan como lista de objetos { msg }.
+      const detalle = Array.isArray(datos?.detail)
+        ? datos.detail.map((error) => String(error.msg).replace(/^Value error, /, '')).join(' ')
+        : datos?.detail ?? 'Ocurrió un error en el servidor.';
       const esUnauthorized = respuesta.status === 401;
 
       mostrarToast(
@@ -398,9 +494,46 @@ const guardarDisponibilidad = async () => {
    ═══════════════════════════════════════════════════════════ */
 
 /**
+ * Marca las celdas donde alguna ficha del instructor tiene Inglés fijo.
+ * El bloqueo es por ficha: la celda sigue seleccionable porque el instructor
+ * puede dictar a otra ficha en ese horario, pero nunca a la que tiene Inglés.
+ */
+const marcarIngles = () => {
+  let bloques = [];
+  try {
+    bloques = JSON.parse(document.getElementById('bloques-ingles')?.textContent || '[]');
+  } catch {
+    return;
+  }
+
+  const fichasPorCelda = new Map();
+  bloques.forEach(({ dia, bloque, ficha_id: fichaId }) => {
+    const clave = `${dia}|${bloque}`;
+    fichasPorCelda.set(clave, [...(fichasPorCelda.get(clave) || []), fichaId]);
+  });
+
+  fichasPorCelda.forEach((fichas, clave) => {
+    const [dia, bloque] = clave.split('|');
+    const celda = document.querySelector(`.time-block[data-dia="${dia}"][data-bloque="${bloque}"]`);
+    if (!celda) return;
+    const texto = fichas.length === 1 ? `Inglés · ${fichas[0]}` : `Inglés · ${fichas.length} fichas`;
+    const marca = document.createElement('span');
+    marca.className = 'time-block__ingles';
+    marca.setAttribute('aria-hidden', 'true');
+    marca.textContent = texto;
+    celda.classList.add('time-block--ingles');
+    celda.appendChild(marca);
+    celda.title = `Inglés fijo de la ficha ${fichas.join(', ')}. Aquí solo podrás dictar a otras fichas.`;
+    celda.setAttribute('aria-label', `${celda.getAttribute('aria-label')} (Inglés fijo de la ficha ${fichas.join(', ')})`);
+  });
+};
+
+/**
  * Inicializa todos los event listeners de la página.
  */
 const inicializar = () => {
+  marcarIngles();
+
   // ── Celdas de la grilla ──
   getBloques().forEach((celda) => {
     // Clic con ratón
