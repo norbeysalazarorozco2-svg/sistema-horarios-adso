@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas de huecos{% endblock %}
+{% block meta_description %}RAP sin instructor y candidatos tentativos para horas extra, para la Gestora del SENA ADSO.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/alertas_gestora.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading alertas-heading">
+  <div>
+    <span class="page-heading__eyebrow">Gestora · Programación</span>
+    <h1 class="page-heading__title">Alertas de huecos</h1>
+    <p class="page-heading__subtitle">RAP que quedaron sin instructor y quién podría cubrirlos con horas extra hasta 40 h.</p>
+  </div>
+  <div class="page-heading__acciones">
+    <a class="btn btn-ghost" href="/gestora/equidad">Ver equidad</a>
+    <button type="button" class="btn btn-secondary" id="btn-actualizar">
+      <svg class="icono" aria-hidden="true" focusable="false"><use href="#i-flechas"></use></svg>
+      Actualizar
+    </button>
+  </div>
+</header>
+
+<div class="aviso alertas-aviso" id="alertas-aviso" role="status" aria-live="polite">
+  <p class="alertas-aviso__texto">Cargando alertas…</p>
+</div>
+
+<section class="card mb-6 alertas-respuestas hidden" id="alertas-respuestas" aria-labelledby="alertas-respuestas-heading">
+  <h2 class="card__title" id="alertas-respuestas-heading">Respuestas de los instructores</h2>
+  <ul class="alertas-respuestas__lista" id="alertas-respuestas-lista" aria-live="polite"></ul>
+</section>
+
+<section class="card" aria-labelledby="alertas-heading">
+  <div class="card__cabecera">
+    <div>
+      <h2 class="card__title" id="alertas-heading">RAP sin instructor</h2>
+      <p class="alertas-ayuda">Elige un candidato y solicita su confirmación de horas extra.</p>
+    </div>
+    <div class="chips-filtro" role="group" aria-label="Filtrar alertas por estado">
+      <button type="button" class="chip-filtro alertas-chip alertas-chip--activo" data-filtro="abierta" aria-pressed="true">Abiertas <span class="chip-filtro__cuenta" data-cuenta="abierta">–</span></button>
+      <button type="button" class="chip-filtro alertas-chip" data-filtro="confirmacion_solicitada" aria-pressed="false">En confirmación <span class="chip-filtro__cuenta" data-cuenta="confirmacion_solicitada">–</span></button>
+      <button type="button" class="chip-filtro alertas-chip" data-filtro="cubierta" aria-pressed="false">Cubiertas <span class="chip-filtro__cuenta" data-cuenta="cubierta">–</span></button>
+      <button type="button" class="chip-filtro alertas-chip" data-filtro="" aria-pressed="false">Todas</button>
+    </div>
+  </div>
+
+  <p class="estado-vacio alertas-vacio hidden" id="alertas-vacio" role="status"></p>
+  <ul class="alertas-lista" id="alertas-lista" aria-labelledby="alertas-heading"></ul>
+</section>
+
+<div class="alertas-notificaciones" id="alertas-notificaciones" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/alertas_gestora.js') }}" defer></script>
+{% endblock %}
