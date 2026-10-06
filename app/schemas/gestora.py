@@ -48,13 +48,21 @@ JORNADA_POR_BLOQUE: dict[str, str] = {
 
 BLOQUES_HORARIOS: tuple[str, ...] = tuple(JORNADA_POR_BLOQUE)
 
+# Las fichas usan "Diurna"/"Nocturna"; los bloques, "Mañana"/"Tarde"/"Noche".
+JORNADA_DE_BLOQUES: dict[str, str] = {
+    "Diurna": "Mañana",
+    "Mañana": "Mañana",
+    "Tarde": "Tarde",
+    "Nocturna": "Noche",
+    "Noche": "Noche",
+}
+
 DIAS_SEMANA: tuple[str, ...] = (
     "LUNES",
     "MARTES",
     "MIERCOLES",
     "JUEVES",
     "VIERNES",
-    "SABADO",
 )
 
 
@@ -161,6 +169,30 @@ class ResumenFichasTrimestres(BaseModel):
     trimestres: list[int] = Field(default_factory=list)
 
 
+# ── Instructores ─────────────────────────────────────────────────────────────
+
+class FichaDeInstructor(BaseModel):
+    id: int
+    trimestre: int = Field(ge=1)
+    jornada: str
+
+
+class InstructorGestora(BaseModel):
+    """Instructor vinculado a la Gestora. Sin horas totales: el backend aún no las calcula."""
+
+    id: int
+    nombre: str
+    correo_sena: str = ""
+    fecha_ingreso: date | None = None
+    es_nuevo: bool = False
+    fichas: list[FichaDeInstructor] = Field(default_factory=list)
+
+
+class ListadoInstructoresGestora(BaseModel):
+    items: list[InstructorGestora] = Field(default_factory=list)
+    total: int = Field(ge=0)
+
+
 # ── Horarios ─────────────────────────────────────────────────────────────────
 
 class BloqueHorario(BaseModel):
@@ -171,6 +203,7 @@ class BloqueHorario(BaseModel):
     ocupada: bool = False
     ficha_id: int | None = None
     transversal: str | None = None
+    bloqueado: bool = Field(default=False, description="Bloque fijo de la gestora (p. ej. Inglés); no es variable del motor.")
     instructor: InstructorReferencia | None = None
 
 

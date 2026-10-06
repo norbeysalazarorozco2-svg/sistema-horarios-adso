@@ -12,11 +12,17 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import os
 
+from app.api.alertas import router as alertas_router
 from app.api.auth import router as auth_router
 from app.api.catalogo import router as catalogo_router
 from app.api.malla import router as malla_router
 from app.api.disponibilidad import router as disponibilidad_router
+from app.api.equidad import router as equidad_router
 from app.api.gestora import router as gestora_router
+from app.api.horas_extra import router as horas_extra_router, solicitudes_pendientes_de
+from app.api.lideres import ficha_liderada_por, router as lideres_router
+from app.api.mi_ficha import instructor_id_de, router as mi_ficha_router
+from app.api.trimestre import router as trimestre_router, trimestre_aprobado
 from app.api.perfil import (
     router as perfil_router,
     router_transversales as transversales_router,
@@ -73,6 +79,12 @@ app.include_router(disponibilidad_router)
 app.include_router(perfil_router)
 app.include_router(transversales_router)
 app.include_router(gestora_router)
+app.include_router(alertas_router)
+app.include_router(lideres_router)
+app.include_router(equidad_router)
+app.include_router(trimestre_router)
+app.include_router(mi_ficha_router)
+app.include_router(horas_extra_router)
 
 # ── Contexto de sesión para las vistas SSR ───────────────────────────────────
 
@@ -320,14 +332,19 @@ async def vista_disponibilidad(request: Request):
     contexto = {
         "es_nuevo": False,
         "instructor_nombre": "",
+        "bloques_ingles": [],
         **contexto_sesion(request),
     }
 
     if payload:
         from app.api.disponibilidad import es_nuevo_instructor
+        from app.api.gestora import bloques_ingles_de_instructor
 
         contexto["es_nuevo"] = es_nuevo_instructor(payload.get("fecha_ingreso"))
         contexto["instructor_nombre"] = payload.get("nombre", "")
+        instructor_id = instructor_id_de(payload)
+        if instructor_id is not None:
+            contexto["bloques_ingles"] = bloques_ingles_de_instructor(instructor_id)
 
     return templates.TemplateResponse(
         request,
@@ -359,6 +376,48 @@ async def vista_perfil_instructor(request: Request):
         context={
             "instructor_nombre": payload.get("nombre", ""),
             "es_nuevo": es_nuevo_instructor(payload.get("fecha_ingreso")),
+            "ficha_liderada": ficha_liderada_por(instructor_id_de(payload)),
+            "horas_extra_pendientes": solicitudes_pendientes_de(instructor_id_de(payload)),
+            "horario_publicado": trimestre_aprobado(),
+            **contexto_sesion(request),
+        },
+    )
+
+
+@app.get("/horas-extra", response_class=HTMLResponse, include_in_schema=False)
+async def vista_horas_extra(request: Request):
+    """Solicitudes de horas extra que la gestora envió al instructor."""
+    try:
+        payload = get_current_user_from_request(request)
+    except HTTPException:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    if es_gestora(payload):
+        return RedirectResponse(url="/gestora/alertas", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "horas_extra.html",
+        context={**contexto_sesion(request)},
+    )
+
+
+@app.get("/mi-ficha", response_class=HTMLResponse, include_in_schema=False)
+async def vista_mi_ficha(request: Request):
+    """Ficha que lidera el instructor; si no lidera ninguna, muestra un estado vacío."""
+    try:
+        payload = get_current_user_from_request(request)
+    except HTTPException:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    if es_gestora(payload):
+        return RedirectResponse(url="/gestora/lideres", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "mi_ficha.html",
+        context={
+            "ficha_liderada": ficha_liderada_por(instructor_id_de(payload)),
             **contexto_sesion(request),
         },
     )
@@ -389,6 +448,86 @@ async def vista_perfil_gestora(request: Request):
             "trimestre_actual": trimestre_actual(),
             **contexto_sesion(request),
         },
+    )
+
+
+@app.get("/gestora/alertas", response_class=HTMLResponse, include_in_schema=False)
+async def vista_alertas_gestora(request: Request):
+    """Alertas de huecos: RAP sin instructor y candidatos para horas extra."""
+    try:
+        payload = get_current_user_from_request(request)
+    except HTTPException:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    try:
+        require_gestora(payload)
+    except HTTPException:
+        return RedirectResponse(url="/disponibilidad", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "alertas_gestora.html",
+        context={**contexto_sesion(request)},
+    )
+
+
+@app.get("/gestora/trimestre", response_class=HTMLResponse, include_in_schema=False)
+async def vista_trimestre_gestora(request: Request):
+    """Aprobación final del trimestre: verificaciones, aprobación y reapertura (§8)."""
+    try:
+        payload = get_current_user_from_request(request)
+    except HTTPException:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    try:
+        require_gestora(payload)
+    except HTTPException:
+        return RedirectResponse(url="/disponibilidad", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "trimestre_gestora.html",
+        context={**contexto_sesion(request)},
+    )
+
+
+@app.get("/gestora/equidad", response_class=HTMLResponse, include_in_schema=False)
+async def vista_equidad_gestora(request: Request):
+    """Historial de carga por trimestre y compensaciones de equidad (§6)."""
+    try:
+        payload = get_current_user_from_request(request)
+    except HTTPException:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    try:
+        require_gestora(payload)
+    except HTTPException:
+        return RedirectResponse(url="/disponibilidad", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "equidad_gestora.html",
+        context={**contexto_sesion(request)},
+    )
+
+
+@app.get("/gestora/lideres", response_class=HTMLResponse, include_in_schema=False)
+async def vista_lideres_gestora(request: Request):
+    """Asignación del instructor líder de cada ficha y su bloque semanal."""
+    try:
+        payload = get_current_user_from_request(request)
+    except HTTPException:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    try:
+        require_gestora(payload)
+    except HTTPException:
+        return RedirectResponse(url="/disponibilidad", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "lideres_gestora.html",
+        context={**contexto_sesion(request)},
     )
 
 

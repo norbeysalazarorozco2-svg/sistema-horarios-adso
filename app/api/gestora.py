@@ -19,21 +19,27 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.auth import USUARIOS_MOCK
 from app.api.catalogo import obtener_programa
+from app.api.disponibilidad import es_nuevo_instructor
 from app.api.perfil import SOLICITUDES_TRANSVERSALES
+from app.core.carga import HORAS_INGLES_POR_JORNADA, TRANSVERSAL_INGLES, horas_continuas_maximas
 from app.core.security import require_gestora
 from app.schemas.gestora import (
     BLOQUES_HORARIOS,
     DIAS_SEMANA,
     ESTADOS_CERRADOS,
     ESTADOS_SOLICITUD,
+    JORNADA_DE_BLOQUES,
     JORNADA_POR_BLOQUE,
     ActualizacionSolicitud,
     BandejaSolicitudes,
     BloqueHorario,
     ContadoresBandeja,
+    FichaDeInstructor,
     FichaTrimestre,
     HorarioGestora,
+    InstructorGestora,
     InstructorReferencia,
+    ListadoInstructoresGestora,
     PerfilGestora,
     ResumenFichasTrimestres,
     ResultadoActualizacionSolicitud,
@@ -212,8 +218,59 @@ DIA_CORTO: dict[str, str] = {
     "MIERCOLES": "Mié",
     "JUEVES": "Jue",
     "VIERNES": "Vie",
-    "SABADO": "Sáb",
 }
+
+
+# ── Inglés fijo por ficha ────────────────────────────────────────────────────
+# La gestora fija Inglés en cada ficha antes de programar a ADSO: 3 h en
+# Mañana/Tarde y 2 h en Noche, es decir, un bloque completo de la jornada de la
+# ficha. Ese bloque queda bloqueado: ni el líder ni el motor pueden usarlo.
+
+def bloques_de_jornada(jornada_ficha: str) -> list[str]:
+    objetivo = JORNADA_DE_BLOQUES.get(jornada_ficha)
+    return [b for b, j in JORNADA_POR_BLOQUE.items() if objetivo is None or j == objetivo]
+
+
+def _fijar_ingles(fichas: list[dict]) -> dict[int, dict]:
+    """Franja de Inglés por ficha, escalonada para que dos fichas del mismo
+    trimestre no compartan franja (el horario consolidado muestra una por celda)."""
+    fijados: dict[int, dict] = {}
+    usados: set[tuple[int, str, str]] = set()
+    posicion_en_trimestre: dict[int, int] = {}
+    for ficha in fichas:
+        jornada = JORNADA_DE_BLOQUES.get(ficha["jornada"], "Mañana")
+        horas = HORAS_INGLES_POR_JORNADA[jornada]
+        candidatos = [b for b in bloques_de_jornada(ficha["jornada"]) if horas_continuas_maximas([b]) == horas]
+        posicion = posicion_en_trimestre.get(ficha["trimestre"], 0)
+        posicion_en_trimestre[ficha["trimestre"]] = posicion + 1
+        # Arranca el martes y rota: el lunes suele quedar para el líder de ficha.
+        dias = [DIAS_SEMANA[(1 + posicion + k) % len(DIAS_SEMANA)] for k in range(len(DIAS_SEMANA))]
+        dia, bloque = next(
+            (d, b)
+            for d in dias
+            for b in reversed(candidatos)
+            if (ficha["trimestre"], d, b) not in usados
+        )
+        usados.add((ficha["trimestre"], dia, bloque))
+        fijados[ficha["id"]] = {"dia": dia, "bloque": bloque, "horas": horas, "fijado_por": 1}
+    return fijados
+
+
+# ⚠️ PROVISIONAL — ficha_id → bloque de Inglés (reemplazar con Bloque.bloqueado en SQLAlchemy)
+INGLES_FICHA: dict[int, dict] = _fijar_ingles(FICHAS_GESTORA_MOCK)
+
+
+def bloque_ingles(ficha_id: int) -> dict | None:
+    return INGLES_FICHA.get(ficha_id)
+
+
+def bloques_ingles_de_instructor(instructor_id: int) -> list[dict]:
+    """Bloques de Inglés de las fichas donde dicta el instructor."""
+    return [
+        {"ficha_id": ficha["id"], "dia": INGLES_FICHA[ficha["id"]]["dia"], "bloque": INGLES_FICHA[ficha["id"]]["bloque"]}
+        for ficha in FICHAS_GESTORA_MOCK
+        if instructor_id in ficha["instructor_ids"] and ficha["id"] in INGLES_FICHA
+    ]
 
 # ── Utilidades de rol ────────────────────────────────────────────────────────
 
@@ -438,12 +495,20 @@ def _registro_solicitud(solicitud_id: int) -> dict:
 # ── Composición del horario ──────────────────────────────────────────────────
 
 def _horarios_del_trimestre(trimestre: int) -> list[dict]:
-    """Composición determinista del horario: materia de cada ficha más las
-    transversales ya aprobadas o en revisión de sus solicitudes."""
+    """Composición determinista del horario. Orden de programación (§2):
+    primero el Inglés fijo de cada ficha (bloqueado), luego la materia de cada
+    ficha y las transversales aprobadas o en revisión, solo en lo que sobra."""
     asignaciones: list[dict] = []
     ocupadas: set[tuple[str, str]] = set()
 
-    def reservar(dia: str, bloque: str, ficha: dict, instructor_id: int, transversal: str | None) -> bool:
+    def reservar(
+        dia: str,
+        bloque: str,
+        ficha: dict,
+        instructor_id: int | None,
+        transversal: str | None,
+        bloqueado: bool = False,
+    ) -> bool:
         clave = (dia, bloque)
         if clave in ocupadas:
             return False
@@ -456,9 +521,15 @@ def _horarios_del_trimestre(trimestre: int) -> list[dict]:
                 "ficha_id": ficha["id"],
                 "instructor_id": instructor_id,
                 "transversal": transversal,
+                "bloqueado": bloqueado,
             }
         )
         return True
+
+    for ficha in _fichas_del_trimestre(trimestre):
+        ingles = bloque_ingles(ficha["id"])
+        if ingles:
+            reservar(ingles["dia"], ingles["bloque"], ficha, None, TRANSVERSAL_INGLES, bloqueado=True)
 
     for indice, ficha in enumerate(_fichas_del_trimestre(trimestre)):
         for desplazamiento, instructor_id in enumerate(ficha["instructor_ids"]):
@@ -708,6 +779,7 @@ def listar_horarios(
             ocupada=True,
             ficha_id=item["ficha_id"],
             transversal=item["transversal"],
+            bloqueado=item["bloqueado"],
             instructor=_instructor_por_id(item["instructor_id"]),
         )
         for item in sorted(
@@ -726,6 +798,31 @@ def listar_horarios(
         bloques=list(BLOQUES_HORARIOS),
         asignaciones=asignaciones,
         total_asignaciones=len(asignaciones),
-        horas_asignadas=round(len(asignaciones) * 2, 1),
+        horas_asignadas=round(sum(horas_continuas_maximas([a.bloque]) for a in asignaciones), 1),
         huecos=len(DIAS_SEMANA) * len(BLOQUES_HORARIOS) - len(asignaciones),
     )
+
+
+@router.get(
+    "/instructores",
+    response_model=ListadoInstructoresGestora,
+    summary="Instructores vinculados a la Gestora y sus fichas",
+)
+def listar_instructores(usuario: dict = Depends(require_gestora)) -> ListadoInstructoresGestora:
+    _exigir_gestora(usuario)
+    items = [
+        InstructorGestora(
+            id=instructor["id"],
+            nombre=instructor["nombre"],
+            correo_sena=instructor.get("correo_sena", ""),
+            fecha_ingreso=_a_fecha(instructor.get("fecha_ingreso")),
+            es_nuevo=es_nuevo_instructor(instructor.get("fecha_ingreso")),
+            fichas=[
+                FichaDeInstructor(id=ficha["id"], trimestre=ficha["trimestre"], jornada=ficha["jornada"])
+                for ficha in sorted(FICHAS_GESTORA_MOCK, key=lambda ficha: (ficha["trimestre"], ficha["id"]))
+                if instructor["id"] in ficha["instructor_ids"]
+            ],
+        )
+        for instructor in sorted(INSTRUCTORES_GESTORA, key=lambda instructor: instructor["nombre"])
+    ]
+    return ListadoInstructoresGestora(items=items, total=len(items))
