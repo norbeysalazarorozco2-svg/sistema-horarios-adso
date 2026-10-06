@@ -8,7 +8,7 @@ Cubre las tres secciones de /perfil-gestora:
   - Horarios.
 """
 
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -195,24 +195,67 @@ class ListadoInstructoresGestora(BaseModel):
 
 # ── Horarios ─────────────────────────────────────────────────────────────────
 
+TipoSesion = Literal["ingles", "lider", "transversal", "tecnica"]
+
+
 class BloqueHorario(BaseModel):
+    """Una sesión semanal de una ficha. Varias fichas pueden compartir franja."""
+
     dia: str
     dia_corto: str
     bloque: str
     jornada: str
     ocupada: bool = False
     ficha_id: int | None = None
+    trimestre: int | None = None
+    tipo: TipoSesion = "tecnica"
+    materia: str | None = Field(default=None, description="Competencia o transversal.")
     transversal: str | None = None
+    aula: str | None = None
+    horas: float = 0
     bloqueado: bool = Field(default=False, description="Bloque fijo de la gestora (p. ej. Inglés); no es variable del motor.")
     instructor: InstructorReferencia | None = None
+
+
+class PendienteHorario(BaseModel):
+    """Lo que el motor no pudo programar (hueco)."""
+
+    ficha_id: int
+    trimestre: int
+    prioridad: Literal[1, 2]
+    tipo: str
+    materia: str
+    horas: float
+    motivo: str
 
 
 class HorarioGestora(BaseModel):
     trimestre: int = Field(ge=1)
     jornada: str
+    ficha_id: int | None = None
+    generado: bool = Field(description="False: aún no se ha generado; solo se muestran los bloques fijos.")
+    generado_en: datetime | None = None
     dias: list[str] = Field(default_factory=list)
     bloques: list[str] = Field(default_factory=list)
     asignaciones: list[BloqueHorario] = Field(default_factory=list)
     total_asignaciones: int = Field(ge=0)
     horas_asignadas: float = Field(ge=0)
-    huecos: int = Field(ge=0)
+    huecos: int = Field(ge=0, description="Pendientes del motor en las fichas consultadas.")
+    pendientes: list[PendienteHorario] = Field(default_factory=list)
+
+
+class CargaGenerada(BaseModel):
+    id: int
+    nombre: str
+    horas: float
+    tope: float
+
+
+class ResultadoGeneracion(BaseModel):
+    generado_en: datetime
+    total_sesiones: int
+    horas_programadas: float
+    fichas: int
+    pendientes: list[PendienteHorario]
+    pendientes_prioridad_alta: int = Field(description="Huecos en fichas de trimestres 1–5 (§4: no deberían existir).")
+    carga: list[CargaGenerada]

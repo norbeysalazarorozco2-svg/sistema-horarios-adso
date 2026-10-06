@@ -50,7 +50,7 @@ HUECOS_RAP_MOCK: list[dict] = [
         "ficha_id": 3365171,
         "rap_id": 3,
         "horas_requeridas": 6.0,
-        "bloques": ["MARTES 15:00-18:00", "LUNES 15:00-18:00"],  # jueves 15-18 es Inglés fijo
+        "bloques": ["MARTES 15:00-18:00", "JUEVES 15:00-18:00"],
     },
     {
         "id": 2,

@@ -24,7 +24,36 @@ router = APIRouter(
 )
 
 # ⚠️ PROVISIONAL — persistencia en memoria (reemplazar con SQLAlchemy)
-ALMACEN_DISPONIBILIDAD: dict[str, dict[int, dict]] = {}
+SEMANA = ("LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES")
+
+
+def _franjas(dias: tuple[str, ...], *bloques: str) -> list[dict]:
+    return [{"dia": dia, "bloque": bloque} for dia in dias for bloque in bloques]
+
+
+def _registro_demo(bloques: list[dict]) -> dict:
+    return {
+        "competencia": "220501095",
+        "rap": "Implementar servicios web",
+        "bloques": bloques,
+        "guardado_en": "2026-09-01T08:00:00",
+    }
+
+
+# Disponibilidad ya marcada por los instructores demo (máx. 9 h continuas por día),
+# para que el motor de horarios tenga con qué trabajar desde el arranque.
+ALMACEN_DISPONIBILIDAD: dict[str, dict[int, dict]] = {
+    "101": {1: _registro_demo(
+        _franjas(SEMANA, "06:00-09:00", "09:00-12:00") + _franjas(("LUNES", "MIERCOLES"), "12:00-15:00")
+    )},
+    "103": {1: _registro_demo(_franjas(SEMANA, "06:00-09:00", "09:00-12:00"))},
+    "104": {1: _registro_demo(_franjas(SEMANA, "09:00-12:00", "12:00-15:00", "15:00-18:00"))},
+    "105": {1: _registro_demo(
+        _franjas(("LUNES", "MIERCOLES"), "12:00-15:00", "15:00-18:00", "20:00-22:00")
+        + _franjas(("MARTES", "JUEVES"), "06:00-09:00", "09:00-12:00", "18:00-20:00")
+        + _franjas(("VIERNES",), "12:00-15:00", "15:00-18:00")
+    )},
+}
 
 MESES_NUEVO_INSTRUCTOR = 3
 RANGO_TRIMESTRES = range(1, 7)

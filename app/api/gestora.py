@@ -231,24 +231,31 @@ def bloques_de_jornada(jornada_ficha: str) -> list[str]:
     return [b for b, j in JORNADA_POR_BLOQUE.items() if objetivo is None or j == objetivo]
 
 
+# Día de Inglés por trimestre: rota para que los instructores de Inglés alcancen
+# a todas las fichas (dos trimestres distintos no lo tienen el mismo día salvo
+# que haya más de cinco). El lunes queda al final: suele ser del líder de ficha.
+DIAS_INGLES: tuple[str, ...] = ("MARTES", "JUEVES", "MIERCOLES", "VIERNES", "LUNES")
+
+
 def _fijar_ingles(fichas: list[dict]) -> dict[int, dict]:
-    """Franja de Inglés por ficha, escalonada para que dos fichas del mismo
-    trimestre no compartan franja (el horario consolidado muestra una por celda)."""
+    """Un único bloque semanal de Inglés por ficha, recurrente todo el trimestre.
+
+    Las fichas de un mismo trimestre y jornada reciben Inglés el mismo día, en
+    bloques distintos; solo si ese día se llena se pasa al siguiente. Cada
+    trimestre arranca en un día distinto de DIAS_INGLES.
+    """
     fijados: dict[int, dict] = {}
     usados: set[tuple[int, str, str]] = set()
-    posicion_en_trimestre: dict[int, int] = {}
     for ficha in fichas:
         jornada = JORNADA_DE_BLOQUES.get(ficha["jornada"], "Mañana")
         horas = HORAS_INGLES_POR_JORNADA[jornada]
         candidatos = [b for b in bloques_de_jornada(ficha["jornada"]) if horas_continuas_maximas([b]) == horas]
-        posicion = posicion_en_trimestre.get(ficha["trimestre"], 0)
-        posicion_en_trimestre[ficha["trimestre"]] = posicion + 1
-        # Arranca el martes y rota: el lunes suele quedar para el líder de ficha.
-        dias = [DIAS_SEMANA[(1 + posicion + k) % len(DIAS_SEMANA)] for k in range(len(DIAS_SEMANA))]
+        inicio = (ficha["trimestre"] - 1) % len(DIAS_INGLES)
+        dias = DIAS_INGLES[inicio:] + DIAS_INGLES[:inicio]
         dia, bloque = next(
             (d, b)
             for d in dias
-            for b in reversed(candidatos)
+            for b in candidatos
             if (ficha["trimestre"], d, b) not in usados
         )
         usados.add((ficha["trimestre"], dia, bloque))
@@ -264,13 +271,11 @@ def bloque_ingles(ficha_id: int) -> dict | None:
     return INGLES_FICHA.get(ficha_id)
 
 
-def bloques_ingles_de_instructor(instructor_id: int) -> list[dict]:
-    """Bloques de Inglés de las fichas donde dicta el instructor."""
-    return [
-        {"ficha_id": ficha["id"], "dia": INGLES_FICHA[ficha["id"]]["dia"], "bloque": INGLES_FICHA[ficha["id"]]["bloque"]}
-        for ficha in FICHAS_GESTORA_MOCK
-        if instructor_id in ficha["instructor_ids"] and ficha["id"] in INGLES_FICHA
-    ]
+# ⚠️ PROVISIONAL — último horario generado (app/api/generador.py). Vacío hasta
+# que la gestora pulse "Generar horario automático". Claves: generado_en,
+# generado_por, sesiones, pendientes.
+HORARIO_GENERADO: dict = {}
+
 
 # ── Utilidades de rol ────────────────────────────────────────────────────────
 
@@ -494,70 +499,56 @@ def _registro_solicitud(solicitud_id: int) -> dict:
 
 # ── Composición del horario ──────────────────────────────────────────────────
 
-def _horarios_del_trimestre(trimestre: int) -> list[dict]:
-    """Composición determinista del horario. Orden de programación (§2):
-    primero el Inglés fijo de cada ficha (bloqueado), luego la materia de cada
-    ficha y las transversales aprobadas o en revisión, solo en lo que sobra."""
-    asignaciones: list[dict] = []
-    ocupadas: set[tuple[str, str]] = set()
-
-    def reservar(
-        dia: str,
-        bloque: str,
-        ficha: dict,
-        instructor_id: int | None,
-        transversal: str | None,
-        bloqueado: bool = False,
-    ) -> bool:
-        clave = (dia, bloque)
-        if clave in ocupadas:
-            return False
-        ocupadas.add(clave)
-        asignaciones.append(
-            {
-                "dia": dia,
-                "bloque": bloque,
-                "jornada": JORNADA_POR_BLOQUE.get(bloque, "Mañana"),
-                "ficha_id": ficha["id"],
-                "instructor_id": instructor_id,
-                "transversal": transversal,
-                "bloqueado": bloqueado,
-            }
-        )
-        return True
-
+def _bloques_fijos(trimestre: int) -> list[dict]:
+    """Antes de generar: solo el Inglés fijo de cada ficha del trimestre."""
+    sesiones = []
     for ficha in _fichas_del_trimestre(trimestre):
         ingles = bloque_ingles(ficha["id"])
         if ingles:
-            reservar(ingles["dia"], ingles["bloque"], ficha, None, TRANSVERSAL_INGLES, bloqueado=True)
+            sesiones.append(
+                {
+                    "ficha_id": ficha["id"],
+                    "trimestre": ficha["trimestre"],
+                    "dia": ingles["dia"],
+                    "bloque": ingles["bloque"],
+                    "horas": horas_continuas_maximas([ingles["bloque"]]),
+                    "tipo": "ingles",
+                    "materia": TRANSVERSAL_INGLES,
+                    "instructor_id": None,
+                    "instructor_nombre": None,
+                    "aula": None,
+                    "bloqueado": True,
+                }
+            )
+    return sesiones
 
-    for indice, ficha in enumerate(_fichas_del_trimestre(trimestre)):
-        for desplazamiento, instructor_id in enumerate(ficha["instructor_ids"]):
-            dia = DIAS_SEMANA[(indice + desplazamiento) % len(DIAS_SEMANA)]
-            base = (indice * 2 + desplazamiento) % len(BLOQUES_HORARIOS)
-            reservar(dia, BLOQUES_HORARIOS[base], ficha, instructor_id, None)
-            reservar(dia, BLOQUES_HORARIOS[(base + 1) % len(BLOQUES_HORARIOS)], ficha, instructor_id, None)
 
-    for registro in SOLICITUDES_TRANSVERSALES:
-        ficha = _ficha_por_id(registro.get("ficha_id"))
-        if ficha is None or ficha["trimestre"] != trimestre:
-            continue
-        if not _es_abierta(registro.get("estado")):
-            continue
-        instructor_ids = ficha["instructor_ids"] or [registro.get("solicitada_por")]
-        instructor_id = next(
-            (valor for valor in instructor_ids if _instructor_por_id(valor)),
-            None,
+def a_bloque_horario(sesion: dict) -> BloqueHorario:
+    instructor = None
+    if sesion.get("instructor_id") is not None:
+        instructor = _instructor_por_id(sesion["instructor_id"]) or InstructorReferencia(
+            id=sesion["instructor_id"], nombre=sesion.get("instructor_nombre") or "Instructor"
         )
-        if instructor_id is None:
-            continue
-        indice = FICHAS_GESTORA_MOCK.index(ficha)
-        dia = DIAS_SEMANA[(indice + 1) % len(DIAS_SEMANA)]
-        bloque = BLOQUES_HORARIOS[(indice * 2 + 3) % len(BLOQUES_HORARIOS)]
-        transversal = next(iter(registro.get("transversales", [])), None)
-        reservar(dia, bloque, ficha, int(instructor_id), transversal)
+    return BloqueHorario(
+        dia=sesion["dia"],
+        dia_corto=DIA_CORTO.get(sesion["dia"], sesion["dia"].title()),
+        bloque=sesion["bloque"],
+        jornada=JORNADA_POR_BLOQUE.get(sesion["bloque"], "Mañana"),
+        ocupada=True,
+        ficha_id=sesion["ficha_id"],
+        trimestre=sesion.get("trimestre"),
+        tipo=sesion["tipo"],
+        materia=sesion.get("materia"),
+        transversal=sesion["materia"] if sesion["tipo"] in {"ingles", "transversal"} else None,
+        aula=sesion.get("aula"),
+        horas=sesion.get("horas") or horas_continuas_maximas([sesion["bloque"]]),
+        bloqueado=sesion.get("bloqueado", False),
+        instructor=instructor,
+    )
 
-    return asignaciones
+
+def orden_sesion(sesion: dict) -> tuple:
+    return BLOQUES_HORARIOS.index(sesion["bloque"]), DIAS_SEMANA.index(sesion["dia"]), sesion["ficha_id"]
 
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
@@ -759,47 +750,41 @@ def listar_fichas_trimestres(
 def listar_horarios(
     trimestre: int | None = Query(default=None, ge=1),
     jornada: str = Query(default="todas", max_length=20),
+    ficha: int | None = Query(default=None, description="Filtra una sola ficha."),
     usuario: dict = Depends(require_gestora),
 ) -> HorarioGestora:
     _exigir_gestora(usuario)
     trimestre = _validar_trimestre(trimestre)
     trimestre_consulta = trimestre or trimestre_actual()
-    registros = _horarios_del_trimestre(trimestre_consulta)
+
+    generado = bool(HORARIO_GENERADO)
+    if generado:
+        registros = [s for s in HORARIO_GENERADO["sesiones"] if s["trimestre"] == trimestre_consulta]
+        pendientes = [p for p in HORARIO_GENERADO["pendientes"] if p["trimestre"] == trimestre_consulta]
+    else:
+        registros, pendientes = _bloques_fijos(trimestre_consulta), []
 
     if jornada.strip().lower() not in {"", "todas", "todos"}:
         objetivo = jornada.strip().capitalize()
-        registros = [item for item in registros if item["jornada"] == objetivo]
+        registros = [s for s in registros if JORNADA_POR_BLOQUE.get(s["bloque"]) == objetivo]
+    if ficha is not None:
+        registros = [s for s in registros if s["ficha_id"] == ficha]
+        pendientes = [p for p in pendientes if p["ficha_id"] == ficha]
 
-    asignaciones = [
-        BloqueHorario(
-            dia=item["dia"],
-            dia_corto=DIA_CORTO.get(item["dia"], item["dia"].title()),
-            bloque=item["bloque"],
-            jornada=item["jornada"],
-            ocupada=True,
-            ficha_id=item["ficha_id"],
-            transversal=item["transversal"],
-            bloqueado=item["bloqueado"],
-            instructor=_instructor_por_id(item["instructor_id"]),
-        )
-        for item in sorted(
-            registros,
-            key=lambda item: (
-                BLOQUES_HORARIOS.index(item["bloque"]),
-                DIAS_SEMANA.index(item["dia"]),
-            ),
-        )
-    ]
-
+    asignaciones = [a_bloque_horario(s) for s in sorted(registros, key=orden_sesion)]
     return HorarioGestora(
         trimestre=trimestre_consulta,
         jornada=jornada,
+        ficha_id=ficha,
+        generado=generado,
+        generado_en=HORARIO_GENERADO.get("generado_en"),
         dias=[DIA_CORTO[dia] for dia in DIAS_SEMANA],
         bloques=list(BLOQUES_HORARIOS),
         asignaciones=asignaciones,
         total_asignaciones=len(asignaciones),
-        horas_asignadas=round(sum(horas_continuas_maximas([a.bloque]) for a in asignaciones), 1),
-        huecos=len(DIAS_SEMANA) * len(BLOQUES_HORARIOS) - len(asignaciones),
+        horas_asignadas=round(sum(a.horas for a in asignaciones), 1),
+        huecos=len(pendientes),
+        pendientes=pendientes,
     )
 
 
