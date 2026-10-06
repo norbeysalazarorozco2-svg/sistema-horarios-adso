@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Mi ficha{% endblock %}
+{% block meta_description %}Ficha que lideras: tus bloques semanales, el equipo, los huecos y las transversales.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/mi_ficha.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading mi-ficha-heading">
+  <div>
+    <span class="page-heading__eyebrow">Instructor líder</span>
+    <h1 class="page-heading__title" id="mi-ficha-titulo">{% if ficha_liderada %}Ficha {{ ficha_liderada }}{% else %}Mi ficha{% endif %}</h1>
+    <p class="page-heading__subtitle" id="mi-ficha-subtitulo">{% if ficha_liderada %}Cargando…{% else %}Ficha que lideras este trimestre.{% endif %}</p>
+  </div>
+  <div class="page-heading__acciones">
+    <a class="btn btn-secondary" href="/perfil-instructor">Ir a mi perfil</a>
+  </div>
+</header>
+
+{% if not ficha_liderada %}
+<section class="card mi-ficha-vacio" aria-labelledby="mi-ficha-vacio-titulo">
+  <span class="mi-ficha-vacio__icono" aria-hidden="true">
+    <svg class="icono" focusable="false"><use href="#i-insignia"></use></svg>
+  </span>
+  <h2 class="card__title" id="mi-ficha-vacio-titulo">No eres líder de ninguna ficha</h2>
+  <p class="card__subtitle">La gestora asigna un líder por ficha cada trimestre. Cuando te asigne una, la verás aquí con tus bloques semanales.</p>
+</section>
+{% else %}
+<div class="alert alert-error mb-6 hidden" id="mi-ficha-error" role="alert"></div>
+
+<div class="mi-ficha-rejilla" id="mi-ficha-contenido">
+  <section class="card mi-ficha-semana" aria-labelledby="semana-heading">
+    <h2 class="card__title" id="semana-heading">Tu semana con la ficha</h2>
+    <p class="card__subtitle">Tus clases como líder y los bloques que siguen sin instructor. El horario completo lo publica la gestora.</p>
+    <div class="mi-ficha-grilla-scroll">
+      <div class="mi-ficha-grilla" id="mi-ficha-grilla" role="table" aria-label="Bloques de la jornada de la ficha"></div>
+    </div>
+    <div class="mi-ficha-leyenda" aria-hidden="true">
+      <span><span class="mi-ficha-muestra mi-ficha-muestra--lider">★</span> Tu clase de líder</span>
+      <span><span class="mi-ficha-muestra mi-ficha-muestra--hueco">!</span> Hueco sin instructor</span>
+    </div>
+    <p class="mi-ficha-regla" id="mi-ficha-regla"></p>
+  </section>
+
+  <section class="card mi-ficha-tarjeta" aria-labelledby="huecos-heading">
+    <h2 class="card__title" id="huecos-heading">Huecos de la ficha</h2>
+    <p class="card__subtitle">RAP sin instructor. Los resuelve la gestora.</p>
+    <ul class="mi-ficha-lista" id="mi-ficha-huecos"></ul>
+  </section>
+
+  <section class="card mi-ficha-tarjeta" aria-labelledby="equipo-heading">
+    <h2 class="card__title" id="equipo-heading">Equipo</h2>
+    <ul class="mi-ficha-lista" id="mi-ficha-equipo"></ul>
+    <h3 class="mi-ficha-subtitulo">Competencias</h3>
+    <ul class="mi-ficha-chips" id="mi-ficha-competencias"></ul>
+  </section>
+
+  <section class="card mi-ficha-tarjeta" aria-labelledby="transversales-heading">
+    <h2 class="card__title" id="transversales-heading">Transversales</h2>
+    <p class="card__subtitle">Solicitudes enviadas para esta ficha.</p>
+    <ul class="mi-ficha-lista" id="mi-ficha-transversales"></ul>
+  </section>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if ficha_liderada %}
+<script src="{{ url_for('static', path='js/mi_ficha.js') }}" defer></script>
+{% endif %}
+{% endblock %}

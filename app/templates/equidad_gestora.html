@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Equidad entre trimestres{% endblock %}
+{% block meta_description %}Historial de carga de los instructores por trimestre y compensaciones por horas extra.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/equidad_gestora.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading equidad-heading">
+  <div>
+    <span class="page-heading__eyebrow">Gestora · Programación</span>
+    <h1 class="page-heading__title">Equidad entre trimestres</h1>
+    <p class="page-heading__subtitle">Si un instructor llegó a 40 h con horas extra para tapar un hueco, el trimestre siguiente recibe menos carga.</p>
+  </div>
+  <div class="page-heading__acciones">
+    <a class="btn btn-ghost" href="/gestora/alertas">Ver alertas</a>
+    <button type="button" class="btn btn-secondary" id="btn-actualizar">
+      <svg class="icono" aria-hidden="true" focusable="false"><use href="#i-flechas"></use></svg>
+      Actualizar
+    </button>
+  </div>
+</header>
+
+<div class="aviso equidad-aviso" id="equidad-aviso" role="status" aria-live="polite">
+  <p class="equidad-aviso__texto">Cargando historial…</p>
+</div>
+
+<section class="card mb-6" aria-labelledby="historial-heading">
+  <h2 class="card__title" id="historial-heading">Carga semanal por trimestre</h2>
+  <p class="card__subtitle">Horas totales (formación + extra + 4 h administrativas).</p>
+  <div class="equidad-tabla-wrap tabla-desplazable" tabindex="0" role="region" aria-labelledby="historial-heading">
+    <table class="equidad-tabla">
+      <thead id="equidad-cabecera"></thead>
+      <tbody id="equidad-cuerpo"></tbody>
+    </table>
+  </div>
+  <div class="equidad-leyenda">
+    <span class="equidad-leyenda__item"><span class="equidad-celda equidad-celda--tope">▲ 40 h</span> llegó al tope</span>
+    <span class="equidad-leyenda__item"><span class="equidad-extra">+3 extra</span> horas extra para tapar huecos</span>
+    <span class="equidad-leyenda__item">Solo cuenta para equidad llegar a 40 h <strong>con</strong> horas extra.</span>
+  </div>
+</section>
+
+<section class="card equidad-cierre" aria-labelledby="cierre-heading">
+  <div>
+    <h2 class="card__title" id="cierre-heading">Cierre del trimestre</h2>
+    <p class="card__subtitle" id="cierre-texto">Guarda la carga de cada instructor en su historial. El trimestre siguiente la usará para la regla de equidad.</p>
+  </div>
+  <button type="button" class="btn btn-primary btn-lg" id="btn-cierre" disabled>Guardar cierre</button>
+</section>
+
+<div class="equidad-notificaciones" id="equidad-notificaciones" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/equidad_gestora.js') }}" defer></script>
+{% endblock %}

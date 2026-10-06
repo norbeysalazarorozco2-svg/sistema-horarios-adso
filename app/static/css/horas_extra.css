@@ -1,0 +1,235 @@
+/* ============================================================
+   HORAS_EXTRA.CSS — Solicitudes de horas extra (js/horas_extra.js)
+   ============================================================ */
+
+.horas-extra-heading {
+  align-items: center;
+}
+
+.horas-extra-carga,
+.horas-extra-lista,
+.horas-extra-historial {
+  margin-top: var(--space-4);
+}
+
+.horas-extra-nota {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--slate-500);
+}
+
+.horas-extra-equidad {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--blue-700);
+  background: var(--blue-50);
+  border-radius: var(--radius-md);
+}
+
+.horas-extra-vacio {
+  padding: var(--space-4) 0;
+  color: var(--slate-600);
+}
+
+/* ── Pendientes ── */
+
+.horas-extra-lista,
+.horas-extra-historial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.horas-extra-solicitud {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--red-600);
+  border-radius: var(--radius-lg);
+}
+
+.horas-extra-solicitud--p2 {
+  border-left-color: var(--amber-600);
+}
+
+.horas-extra-solicitud__cabecera {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.horas-extra-prioridad,
+.horas-extra-estado {
+  padding: 2px var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+}
+
+.horas-extra-prioridad--alta { color: var(--red-700);   background: var(--red-50); }
+.horas-extra-prioridad--baja { color: var(--amber-700); background: var(--amber-50); }
+
+.horas-extra-fecha {
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+.horas-extra-solicitud__rap {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  color: var(--slate-900);
+}
+
+.horas-extra-solicitud__competencia {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--slate-500);
+}
+
+.horas-extra-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: var(--space-2) 0 0;
+}
+
+.horas-extra-dato dt {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--slate-500);
+}
+
+.horas-extra-dato dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--slate-800);
+}
+
+.horas-extra-impacto {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+}
+
+.horas-extra-impacto--bloqueado {
+  color: var(--red-700);
+  background: var(--red-50);
+}
+
+.horas-extra-bloqueo {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--red-700);
+}
+
+.horas-extra-acciones {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.horas-extra-rechazo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.horas-extra-rechazo textarea {
+  resize: vertical;
+}
+
+/* ── Historial ── */
+
+.horas-extra-historial {
+  gap: 0;
+}
+
+.horas-extra-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.horas-extra-fila:last-child {
+  border-bottom: none;
+}
+
+.horas-extra-fila__texto {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--slate-800);
+}
+
+.horas-extra-fila__motivo {
+  flex-basis: 100%;
+  font-size: var(--text-xs);
+  font-style: italic;
+  color: var(--slate-500);
+}
+
+.horas-extra-estado--aceptada  { color: var(--green-800); background: var(--green-100); }
+.horas-extra-estado--rechazada { color: var(--red-700);   background: var(--red-100); }
+.horas-extra-estado--cancelada { color: var(--slate-600); background: var(--slate-100); }
+
+/* ── Notificaciones ── */
+
+.horas-extra-notificaciones {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 360px;
+}
+
+.horas-extra-toast {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--green-600);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.12);
+  cursor: pointer;
+}
+
+.horas-extra-toast strong { color: var(--slate-900); }
+.horas-extra-toast--info  { border-left-color: var(--blue-600); }
+.horas-extra-toast--error { border-left-color: var(--red-600); }
+
+@media (max-width: 640px) {
+  .horas-extra-acciones .btn {
+    flex: 1;
+  }
+
+  .horas-extra-notificaciones {
+    left: var(--space-4);
+    right: var(--space-4);
+    max-width: none;
+  }
+}

@@ -1,0 +1,886 @@
+/* ============================================================
+   PERFIL_GESTORA.CSS — Vista independiente de la Gestora
+   Sistema de Horarios ADSO — SENA
+   Panel de acciones y consultas · Solicitudes · Trimestres · Horarios
+   ============================================================ */
+
+/* ── Encabezado ── */
+.gestora-heading {
+  align-items: center;
+}
+
+.gestora-header-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.gestora-header-actions .form-group {
+  min-width: 180px;
+}
+
+.btn-generar { font-weight: 700; }
+
+/* ── Horario consolidado: filtros, estado y pendientes ── */
+.gestora-horario-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.gestora-filtro-ficha { width: auto; min-width: 200px; }
+
+.gestora-generacion { margin-bottom: var(--space-4); }
+
+.gestora-pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.gestora-pendiente {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--sipa-ambar);
+  border-radius: var(--radius-sm);
+  background: var(--sipa-ambar-tenue);
+}
+
+.gestora-pendiente--alta {
+  border-left-color: var(--sipa-rojo);
+  background: var(--sipa-rojo-tenue);
+}
+
+/* ── Panel: acciones y consultas ── */
+.gestora-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.gestora-panel__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gestora-panel__titulo {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gestora-panel__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gestora-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--green-300);
+  border-radius: var(--radius-full);
+  background: var(--green-50);
+  color: var(--green-800);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.gestora-accion:hover {
+  background: var(--green-100);
+}
+
+.gestora-accion.is-activa {
+  background: var(--green-600);
+  border-color: var(--green-600);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.gestora-panel__grupo--consultas {
+  flex: 1 1 420px;
+}
+
+/* Consultas: tarjetas compactas, una activa a la vez */
+.gestora-consultas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.gestora-consulta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--slate-700);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.gestora-consulta:hover {
+  border-color: var(--green-300);
+  background: var(--green-50);
+  color: var(--green-800);
+}
+
+.gestora-consulta.is-activa {
+  background: var(--green-600);
+  border-color: var(--green-600);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.gestora-consulta__icono {
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.gestora-accion:focus-visible,
+.gestora-consulta:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+
+/* ── Consultas: listado + detalle ── */
+.gestora-consulta-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.gestora-consulta-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.gestora-filas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 520px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.gestora-fila {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.gestora-fila:hover {
+  border-color: var(--green-300);
+  background: var(--green-50);
+}
+
+.gestora-fila.is-seleccionada {
+  border-color: var(--green-600);
+  background: var(--green-50);
+  box-shadow: inset 3px 0 0 var(--green-600);
+}
+
+.gestora-fila:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+
+.gestora-fila__titulo {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.gestora-fila__detalle {
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+.gestora-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.gestora-detalle__vacio {
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--slate-500);
+  text-align: center;
+}
+
+.gestora-detalle__contexto {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gestora-detalle__horario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gestora-detalle__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.gestora-detalle__acciones .form-input {
+  width: auto;
+  min-width: 160px;
+}
+
+.gestora-nota {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--slate-500);
+}
+
+.gestora-nota--fuerte {
+  color: var(--slate-700);
+}
+
+.gestora-jornadas-opciones {
+  margin-bottom: var(--space-6);
+}
+
+/* ── Encabezado de sección ── */
+.gestora-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+/* ── Filtros (chips) ── */
+.gestora-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--slate-600);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.chip:hover {
+  border-color: var(--green-300);
+  background: var(--green-50);
+  color: var(--green-800);
+}
+
+.chip--activo {
+  background: var(--green-600);
+  border-color: var(--green-600);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.chip--activo:hover {
+  background: var(--green-700);
+  color: #ffffff;
+}
+
+/* ── Tablas ── */
+.gestora-table-wrap {
+  overflow-x: auto;
+}
+
+.gestora-table-wrap .table {
+  min-width: 900px;
+}
+
+#bandeja-tabla-wrap .table {
+  min-width: 1080px;
+}
+
+.gestora-table-wrap td,
+.gestora-table-wrap th {
+  vertical-align: top;
+}
+
+.gestora-loading {
+  padding: var(--space-8) !important;
+  text-align: center;
+  color: var(--slate-400) !important;
+}
+
+.gestora-empty {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--slate-600);
+  background: var(--slate-50);
+  border: 1px dashed var(--color-border-hover);
+  border-radius: var(--radius-lg);
+}
+
+.gestora-empty strong {
+  display: block;
+  color: var(--slate-800);
+  font-size: var(--text-base);
+  margin-bottom: var(--space-2);
+}
+
+.gestora-empty p {
+  max-width: 60ch;
+  margin: 0 auto;
+  font-size: var(--text-sm);
+}
+
+.gestora-texto {
+  min-width: 160px;
+  max-width: 260px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.gestora-transversales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 160px;
+}
+
+.gestora-instructor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.gestora-instructor__nombre {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--slate-800);
+}
+
+.gestora-instructor__correo {
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+.gestora-competencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 220px;
+  max-width: 320px;
+}
+
+/* ── Fichas del trimestre seleccionado, agrupadas por jornada ── */
+.gestora-fichas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.gestora-fichas-lista[hidden] {
+  display: none;
+}
+
+/* ── Jornada: separador dentro del trimestre ── */
+.gestora-jornada__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--slate-700);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.gestora-jornada__icono {
+  font-size: var(--text-base);
+}
+
+.gestora-jornada__total {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--slate-500);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.gestora-jornada__fichas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Tarjeta de ficha ── */
+.gestora-ficha {
+  padding: var(--space-4);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.gestora-ficha__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.gestora-ficha__identidad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.gestora-ficha__numero {
+  font-size: var(--text-sm);
+  color: var(--slate-900);
+}
+
+.gestora-ficha__programa {
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+.gestora-ficha__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.5fr) minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.gestora-ficha__campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.gestora-ficha__etiqueta {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gestora-ficha__valor {
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  overflow-wrap: anywhere;
+}
+
+.gestora-ficha__instructores {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gestora-ficha__horas {
+  font-weight: 600;
+  color: var(--slate-800);
+}
+
+.gestora-ficha .gestora-competencias {
+  min-width: 0;
+  max-width: none;
+}
+
+/* ── Grilla de horarios ── */
+.gestora-grid-wrapper {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  overflow: auto;
+}
+
+.gestora-grid {
+  display: grid;
+  grid-template-columns: 148px repeat(5, minmax(120px, 1fr));
+  gap: 6px;
+  min-width: 880px;
+}
+
+.gestora-grid__head {
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--slate-600);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--slate-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.gestora-grid__head--libre {
+  background: transparent;
+  border-color: transparent;
+}
+
+.gestora-grid__row-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--slate-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+.gestora-grid__jornada {
+  font-weight: 700;
+  color: var(--slate-700);
+}
+
+.gestora-grid__bloque {
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: 0.6875rem;
+}
+
+.gestora-celda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 68px;
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border-hover);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--text-xs);
+  color: var(--slate-400);
+  text-align: left;
+}
+
+.gestora-celda--materia {
+  background: var(--green-50);
+  border: 1px solid var(--green-200);
+  color: var(--green-800);
+}
+
+.gestora-celda--transversal {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  color: var(--blue-700);
+}
+
+/* Celda con clases: cada ficha es una tarjeta (varias fichas pueden compartir franja). */
+.gestora-celda--ocupada {
+  gap: 4px;
+  padding: 4px;
+  border-style: solid;
+  border-color: var(--color-border);
+  background: var(--sipa-fondo);
+}
+
+.gestora-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+.gestora-sesion--materia {
+  background: var(--sipa-verde-tenue);
+  border: 1px solid var(--sipa-verde-borde);
+  color: var(--sipa-verde-oscuro);
+}
+
+.gestora-sesion--transversal {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  color: var(--blue-700);
+}
+
+/* Inglés fijo de la gestora: bloqueado, no es variable del motor. */
+.gestora-sesion--fija {
+  background: var(--blue-100);
+  border: 1px solid var(--blue-700);
+  color: var(--blue-700);
+}
+
+.gestora-sesion__ficha { font-weight: 700; }
+
+.gestora-sesion__detalle,
+.gestora-sesion__aula {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gestora-sesion__aula { opacity: 0.8; }
+
+.gestora-celda__ficha {
+  font-weight: 700;
+  font-size: var(--text-xs);
+}
+
+.gestora-celda__detalle {
+  color: inherit;
+  opacity: 0.85;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* ── Leyenda ── */
+.gestora-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+}
+
+.leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.leyenda-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.leyenda-swatch--materia {
+  background: var(--green-50);
+  border-color: var(--green-200);
+}
+
+.leyenda-swatch--transversal {
+  background: var(--blue-50);
+  border-color: var(--blue-100);
+}
+
+.leyenda-swatch--fija {
+  background: var(--blue-100);
+  border-color: var(--blue-700);
+}
+
+.leyenda-swatch--libre {
+  background: var(--color-surface);
+  border-style: dashed;
+}
+
+/* ── Modal de resolución ── */
+.gestora-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.gestora-modal__panel {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-8);
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.gestora-modal__campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.gestora-comentarios {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.gestora-modal__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* ── Notificaciones ── */
+.gestora-notifications {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 700;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(380px, calc(100vw - var(--space-8)));
+  pointer-events: none;
+}
+
+.gestora-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--slate-400);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-lg);
+  color: var(--slate-700);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  pointer-events: auto;
+  animation: barata-toast-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.gestora-toast strong { color: var(--slate-900); }
+
+.gestora-toast--success {
+  border-left-color: var(--green-500);
+  background: rgba(238, 250, 242, 0.97);
+}
+
+.gestora-toast--error {
+  border-left-color: var(--red-600);
+  background: rgba(254, 242, 242, 0.97);
+}
+
+.gestora-toast--info {
+  border-left-color: var(--blue-600);
+  background: rgba(239, 246, 255, 0.97);
+}
+
+.gestora-toast.removing {
+  animation: barata-toast-out 0.25s ease forwards;
+}
+
+@keyframes barata-toast-in {
+  from { opacity: 0; transform: translateX(100%) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes barata-toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(60%) scale(0.95); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .gestora-consulta-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gestora-filas {
+    max-height: 320px;
+  }
+
+  .gestora-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .gestora-ficha__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .gestora-consultas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gestora-modal__campos,
+  .gestora-ficha__campos {
+    grid-template-columns: 1fr;
+  }
+
+  .gestora-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gestora-header-actions .form-group,
+  .gestora-header-actions .form-input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .gestora-notifications {
+    right: var(--space-4);
+    bottom: var(--space-4);
+    width: calc(100vw - var(--space-8));
+  }
+}

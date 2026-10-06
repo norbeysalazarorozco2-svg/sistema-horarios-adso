@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Disponibilidad{% endblock %}
+{% block meta_description %}Registra tu disponibilidad horaria semanal como instructor del SENA ADSO.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/disponibilidad.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Encabezado de la página ── -->
+<header class="page-heading dispon-header">
+  <div>
+    <span class="page-heading__eyebrow">Instructor · Disponibilidad</span>
+    <h1 class="page-heading__title" id="disponibilidad-heading">
+      Matriz de disponibilidad
+      {% if es_nuevo %}<span class="badge badge-nuevo dispon-header__badge">Nuevo instructor</span>{% endif %}
+    </h1>
+    <p class="page-heading__subtitle">
+      Elige la competencia y el RAP, y marca los bloques en los que puedes dar formación.
+      Haz clic (o pulsa Enter) sobre cada bloque para activarlo.
+    </p>
+  </div>
+</header>
+
+{% if es_nuevo %}
+<!-- ── Aviso para instructores nuevos (primeros 3 meses) ── -->
+<div class="alert alert-info mb-6" role="status" id="aviso-instructor-nuevo">
+  <span aria-hidden="true">👋</span>
+  <div>
+    <strong>Estás en tus primeros 3 meses como instructor.</strong>
+    No se exigen fichas a cargo para registrar tu disponibilidad.
+    Registra tus competencias, RAPs y disponibilidad con normalidad; la matriz
+    puede quedar con espacios sin cubrir.
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Panel de Competencias y RAPs ── -->
+<section aria-labelledby="filtros-heading" class="dispon-filters">
+  <h2 id="filtros-heading" class="dispon-paso"><span class="dispon-paso__numero" aria-hidden="true">1</span> Competencia y RAP</h2>
+
+  <div class="form-group">
+    <label class="dispon-filters__label" for="select-competencia">
+      Competencia <span class="req" aria-hidden="true">*</span>
+    </label>
+    <select class="form-input" id="select-competencia" name="competencia" required>
+      <option value="">— Selecciona una competencia —</option>
+      <option value="COMP-001">COMP-001 · Análisis y diseño de sistemas</option>
+      <option value="COMP-002">COMP-002 · Programación de software</option>
+      <option value="COMP-003">COMP-003 · Gestión de bases de datos</option>
+      <option value="COMP-004">COMP-004 · Construcción de software</option>
+      <option value="COMP-005">COMP-005 · Despliegue de soluciones</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="dispon-filters__label" for="select-rap">
+      RAP (Resultado de Aprendizaje) <span class="req" aria-hidden="true">*</span>
+    </label>
+    <select class="form-input" id="select-rap" name="rap" disabled required>
+      <option value="">— Selecciona primero una competencia —</option>
+    </select>
+  </div>
+</section>
+
+<!-- ── Grilla de disponibilidad ── -->
+<section aria-labelledby="grilla-heading" class="dispon-grid-wrapper">
+  <div class="dispon-grid-cabecera">
+    <h2 class="dispon-paso" id="grilla-heading"><span class="dispon-paso__numero" aria-hidden="true">2</span> Horario semanal</h2>
+    <p class="dispon-grid-ayuda">El medidor de cada día muestra tu mayor tramo de horas seguidas (máx. 9 h).</p>
+  </div>
+
+  <!--
+    Grilla CSS: 6 columnas
+    col[0]   = etiquetas de jornada/bloque (fija al scroll horizontal)
+    col[1-5] = Lunes a Viernes
+  -->
+  <div class="dispon-grid-scroll">
+  <div class="dispon-grid" role="grid" aria-label="Matriz de disponibilidad horaria" id="dispon-grid">
+
+    <!-- Fila de encabezados de días -->
+    <div class="dispon-grid__header-cell dispon-grid__corner" role="columnheader" aria-hidden="true"></div>
+    <div class="dispon-grid__header-cell" role="columnheader" data-dia-cabecera="LUNES">
+      <span class="dia__nombre">Lun</span>
+      <span class="dia__medidor" aria-hidden="true"><span class="dia__medidor-relleno"></span></span>
+      <span class="dia__horas" title="Mayor tramo continuo del lunes">0 / 9 h</span>
+    </div>
+    <div class="dispon-grid__header-cell" role="columnheader" data-dia-cabecera="MARTES">
+      <span class="dia__nombre">Mar</span>
+      <span class="dia__medidor" aria-hidden="true"><span class="dia__medidor-relleno"></span></span>
+      <span class="dia__horas" title="Mayor tramo continuo del martes">0 / 9 h</span>
+    </div>
+    <div class="dispon-grid__header-cell" role="columnheader" data-dia-cabecera="MIERCOLES">
+      <span class="dia__nombre">Mié</span>
+      <span class="dia__medidor" aria-hidden="true"><span class="dia__medidor-relleno"></span></span>
+      <span class="dia__horas" title="Mayor tramo continuo del miércoles">0 / 9 h</span>
+    </div>
+    <div class="dispon-grid__header-cell" role="columnheader" data-dia-cabecera="JUEVES">
+      <span class="dia__nombre">Jue</span>
+      <span class="dia__medidor" aria-hidden="true"><span class="dia__medidor-relleno"></span></span>
+      <span class="dia__horas" title="Mayor tramo continuo del jueves">0 / 9 h</span>
+    </div>
+    <div class="dispon-grid__header-cell" role="columnheader" data-dia-cabecera="VIERNES">
+      <span class="dia__nombre">Vie</span>
+      <span class="dia__medidor" aria-hidden="true"><span class="dia__medidor-relleno"></span></span>
+      <span class="dia__horas" title="Mayor tramo continuo del viernes">0 / 9 h</span>
+    </div>
+
+    <!-- ── Jornada: MAÑANA ── -->
+    <!-- Bloque 06:00–09:00 -->
+    <div class="dispon-grid__row-label" role="rowheader">
+      <span class="row-label__jornada row-label__jornada--mañana">🌅 Mañana</span>
+      <span class="row-label__horario">06:00 – 09:00</span>
+    </div>
+    <div class="time-block" role="gridcell" data-dia="LUNES"    data-bloque="06:00-09:00" tabindex="0" aria-pressed="false" aria-label="Lunes 06:00-09:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MARTES"   data-bloque="06:00-09:00" tabindex="0" aria-pressed="false" aria-label="Martes 06:00-09:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MIERCOLES" data-bloque="06:00-09:00" tabindex="0" aria-pressed="false" aria-label="Miércoles 06:00-09:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="JUEVES"   data-bloque="06:00-09:00" tabindex="0" aria-pressed="false" aria-label="Jueves 06:00-09:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="VIERNES"  data-bloque="06:00-09:00" tabindex="0" aria-pressed="false" aria-label="Viernes 06:00-09:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+
+    <!-- Bloque 09:00–12:00 -->
+    <div class="dispon-grid__row-label" role="rowheader">
+      <span class="row-label__jornada row-label__jornada--mañana">🌅 Mañana</span>
+      <span class="row-label__horario">09:00 – 12:00</span>
+    </div>
+    <div class="time-block" role="gridcell" data-dia="LUNES"    data-bloque="09:00-12:00" tabindex="0" aria-pressed="false" aria-label="Lunes 09:00-12:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MARTES"   data-bloque="09:00-12:00" tabindex="0" aria-pressed="false" aria-label="Martes 09:00-12:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MIERCOLES" data-bloque="09:00-12:00" tabindex="0" aria-pressed="false" aria-label="Miércoles 09:00-12:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="JUEVES"   data-bloque="09:00-12:00" tabindex="0" aria-pressed="false" aria-label="Jueves 09:00-12:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="VIERNES"  data-bloque="09:00-12:00" tabindex="0" aria-pressed="false" aria-label="Viernes 09:00-12:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+
+    <!-- Separador visual -->
+    <div class="dispon-grid__separator" aria-hidden="true"></div>
+
+    <!-- ── Jornada: TARDE ── -->
+    <!-- Bloque 12:00–15:00 -->
+    <div class="dispon-grid__row-label" role="rowheader">
+      <span class="row-label__jornada row-label__jornada--tarde">☀️ Tarde</span>
+      <span class="row-label__horario">12:00 – 15:00</span>
+    </div>
+    <div class="time-block" role="gridcell" data-dia="LUNES"    data-bloque="12:00-15:00" tabindex="0" aria-pressed="false" aria-label="Lunes 12:00-15:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MARTES"   data-bloque="12:00-15:00" tabindex="0" aria-pressed="false" aria-label="Martes 12:00-15:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MIERCOLES" data-bloque="12:00-15:00" tabindex="0" aria-pressed="false" aria-label="Miércoles 12:00-15:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="JUEVES"   data-bloque="12:00-15:00" tabindex="0" aria-pressed="false" aria-label="Jueves 12:00-15:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="VIERNES"  data-bloque="12:00-15:00" tabindex="0" aria-pressed="false" aria-label="Viernes 12:00-15:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+
+    <!-- Bloque 15:00–18:00 -->
+    <div class="dispon-grid__row-label" role="rowheader">
+      <span class="row-label__jornada row-label__jornada--tarde">☀️ Tarde</span>
+      <span class="row-label__horario">15:00 – 18:00</span>
+    </div>
+    <div class="time-block" role="gridcell" data-dia="LUNES"    data-bloque="15:00-18:00" tabindex="0" aria-pressed="false" aria-label="Lunes 15:00-18:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MARTES"   data-bloque="15:00-18:00" tabindex="0" aria-pressed="false" aria-label="Martes 15:00-18:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MIERCOLES" data-bloque="15:00-18:00" tabindex="0" aria-pressed="false" aria-label="Miércoles 15:00-18:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="JUEVES"   data-bloque="15:00-18:00" tabindex="0" aria-pressed="false" aria-label="Jueves 15:00-18:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="VIERNES"  data-bloque="15:00-18:00" tabindex="0" aria-pressed="false" aria-label="Viernes 15:00-18:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+
+    <!-- Separador visual -->
+    <div class="dispon-grid__separator" aria-hidden="true"></div>
+
+    <!-- ── Jornada: NOCHE ── -->
+    <!-- Bloque 18:00–20:00 -->
+    <div class="dispon-grid__row-label" role="rowheader">
+      <span class="row-label__jornada row-label__jornada--noche">🌙 Noche</span>
+      <span class="row-label__horario">18:00 – 20:00</span>
+    </div>
+    <div class="time-block" role="gridcell" data-dia="LUNES"    data-bloque="18:00-20:00" tabindex="0" aria-pressed="false" aria-label="Lunes 18:00-20:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MARTES"   data-bloque="18:00-20:00" tabindex="0" aria-pressed="false" aria-label="Martes 18:00-20:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MIERCOLES" data-bloque="18:00-20:00" tabindex="0" aria-pressed="false" aria-label="Miércoles 18:00-20:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="JUEVES"   data-bloque="18:00-20:00" tabindex="0" aria-pressed="false" aria-label="Jueves 18:00-20:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="VIERNES"  data-bloque="18:00-20:00" tabindex="0" aria-pressed="false" aria-label="Viernes 18:00-20:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+
+    <!-- Bloque 20:00–22:00 -->
+    <div class="dispon-grid__row-label" role="rowheader">
+      <span class="row-label__jornada row-label__jornada--noche">🌙 Noche</span>
+      <span class="row-label__horario">20:00 – 22:00</span>
+    </div>
+    <div class="time-block" role="gridcell" data-dia="LUNES"    data-bloque="20:00-22:00" tabindex="0" aria-pressed="false" aria-label="Lunes 20:00-22:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MARTES"   data-bloque="20:00-22:00" tabindex="0" aria-pressed="false" aria-label="Martes 20:00-22:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="MIERCOLES" data-bloque="20:00-22:00" tabindex="0" aria-pressed="false" aria-label="Miércoles 20:00-22:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="JUEVES"   data-bloque="20:00-22:00" tabindex="0" aria-pressed="false" aria-label="Jueves 20:00-22:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+    <div class="time-block" role="gridcell" data-dia="VIERNES"  data-bloque="20:00-22:00" tabindex="0" aria-pressed="false" aria-label="Viernes 20:00-22:00"><span class="time-block__check" aria-hidden="true">✓</span></div>
+
+  </div><!-- /#dispon-grid -->
+  </div><!-- /.dispon-grid-scroll -->
+
+  <!-- Leyenda -->
+  <div class="dispon-legend" role="note" aria-label="Leyenda de estados de la grilla">
+    <div class="legend-item">
+      <span class="legend-swatch legend-swatch--libre" aria-hidden="true"></span>
+      Disponible / Libre
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch legend-swatch--seleccionado" aria-hidden="true"></span>
+      Seleccionado
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch legend-swatch--excede" aria-hidden="true"></span>
+      Superaría 9 h continuas
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch legend-swatch--deshabilitado" aria-hidden="true"></span>
+      No disponible
+    </div>
+    <div class="legend-item legend-item--regla">
+      <span aria-hidden="true">⏱️</span>
+      Máximo 9 h continuas por día
+    </div>
+  </div>
+
+</section><!-- /grilla -->
+
+<!-- ── Panel de acciones ── -->
+<section class="dispon-actions" aria-label="Acciones de disponibilidad">
+  <div class="dispon-actions__info">
+    <span class="dispon-actions__count" id="contador-bloques" aria-live="polite" aria-atomic="true">0</span>
+    <span class="dispon-actions__count-label">
+      bloques seleccionados
+      <span class="dispon-actions__horas"><span id="contador-horas">0</span> h disponibles en la semana</span>
+    </span>
+  </div>
+
+  <div class="dispon-actions__botones">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      id="btn-limpiar"
+      aria-label="Limpiar selección de bloques"
+    >
+      🗑 Limpiar
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary btn-lg"
+      id="btn-guardar"
+      aria-label="Guardar disponibilidad horaria"
+    >
+      💾 Guardar disponibilidad
+    </button>
+    <button
+      type="button"
+      class="btn btn-secondary btn-lg"
+      id="btn-siguiente"
+      aria-label="Continuar al perfil del instructor"
+      hidden
+      disabled
+    >
+      Siguiente
+    </button>
+  </div>
+</section>
+
+<!-- ── Nota sobre huecos de tiempo ── -->
+<p class="text-muted text-sm mt-4" role="note">
+  Puedes guardar la matriz aunque queden espacios o huecos de tiempo sin cubrir.
+  Los ajustes menores de horario se coordinan externamente con la gestora.
+</p>
+
+<!-- ── Zona de notificaciones tipo toast ── -->
+<div class="dispon-notifications" id="dispon-notifications" role="status" aria-live="polite" aria-atomic="false"></div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/disponibilidad.js') }}" defer></script>
+{% endblock %}

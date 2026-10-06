@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil del instructor{% endblock %}
+{% block meta_description %}Consulta tus fichas a cargo y solicita asignaturas transversales del SENA ADSO.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/carga.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', path='css/perfil_instructor.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading perfil-heading">
+  <div>
+    <span class="page-heading__eyebrow">Perfil del instructor</span>
+    <div class="perfil-identidad">
+      <span class="perfil-avatar" aria-hidden="true">{{ (instructor_nombre or 'I')[:1] }}</span>
+      <div>
+        <h1 class="page-heading__title" id="perfil-nombre">{{ instructor_nombre or 'Instructor' }}</h1>
+        <div class="perfil-insignias">
+          <span class="badge badge-primary">Instructor</span>
+          <span class="badge badge-accent" id="perfil-estado-badge">Perfil activo</span>
+        </div>
+      </div>
+    </div>
+    <p class="page-heading__subtitle" id="perfil-correo">Cargando información del instructor…</p>
+  </div>
+  <div class="page-heading__acciones perfil-header-actions">
+    {# HERRAMIENTA DE DESARROLLO: no forma parte de SIPA. #}
+    {% if modo_desarrollo %}
+    <div class="perfil-modo-prueba dev-tools dev-tools--en-linea">
+      <span class="dev-tools__etiqueta">Dev</span>
+      <label class="form-label" for="selector-modo-prueba">Modo de prueba</label>
+      <select class="form-input" id="selector-modo-prueba" aria-describedby="modo-prueba-ayuda">
+        <option value="nuevo" {% if es_nuevo %}selected{% endif %}>Instructor Nuevo</option>
+        <option value="antiguo" {% if not es_nuevo %}selected{% endif %}>Instructor Antiguo</option>
+      </select>
+      <span class="form-hint" id="modo-prueba-ayuda">Temporal; no modifica los datos del instructor.</span>
+    </div>
+    {% endif %}
+    {% if ficha_liderada %}
+    <a class="btn btn-secondary" href="/mi-ficha">★ Mi ficha {{ ficha_liderada }}</a>
+    {% endif %}
+    <a class="btn btn-secondary" href="/horas-extra">
+      Horas extra
+      {% if horas_extra_pendientes %}<span class="contador" aria-label="{{ horas_extra_pendientes }} pendientes">{{ horas_extra_pendientes }}</span>{% endif %}
+    </a>
+    <a class="btn btn-primary" href="/disponibilidad">Editar disponibilidad</a>
+  </div>
+</header>
+
+{% if horario_publicado %}
+<div class="alert alert-success mb-6" role="status">
+  <span aria-hidden="true">📢</span>
+  <div class="flex-1">
+    <strong>El horario del trimestre está publicado.</strong>
+    La gestora lo aprobó el {{ horario_publicado.fecha.strftime('%d/%m/%Y') }}; los cambios quedan congelados hasta que lo reabra.
+  </div>
+</div>
+{% endif %}
+
+<div class="alert alert-error mb-6" id="perfil-error" role="alert" hidden></div>
+
+{% if horas_extra_pendientes %}
+<div class="alert alert-info mb-6 perfil-horas-extra" role="status">
+  <span aria-hidden="true">⏳</span>
+  <div class="flex-1">
+    <strong>La gestora te pidió cubrir {{ horas_extra_pendientes }} hueco{{ 's' if horas_extra_pendientes > 1 }} con horas extra.</strong>
+    Revisa la solicitud y acéptala o recházala.
+  </div>
+  <a class="btn btn-primary btn-xs" href="/horas-extra">Responder</a>
+</div>
+{% endif %}
+
+<section class="perfil-resumen" aria-label="Resumen del perfil">
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__icono" aria-hidden="true"><svg class="icono" focusable="false"><use href="#i-grupo"></use></svg></span>
+    <span class="perfil-resumen__label">Fichas a cargo</span>
+    <strong class="perfil-resumen__valor" id="perfil-fichas-count">—</strong>
+  </div>
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__icono" aria-hidden="true"><svg class="icono" focusable="false"><use href="#i-reloj"></use></svg></span>
+    <span class="perfil-resumen__label">Horas de formación</span>
+    <strong class="perfil-resumen__valor" id="perfil-horas">—</strong>
+  </div>
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__icono" aria-hidden="true"><svg class="icono" focusable="false"><use href="#i-insignia"></use></svg></span>
+    <span class="perfil-resumen__label">Competencias</span>
+    <strong class="perfil-resumen__valor" id="perfil-competencias-count">—</strong>
+  </div>
+  <div class="perfil-resumen__item">
+    <span class="perfil-resumen__icono" aria-hidden="true"><svg class="icono" focusable="false"><use href="#i-calendario"></use></svg></span>
+    <span class="perfil-resumen__label">Antigüedad</span>
+    <strong class="perfil-resumen__valor perfil-resumen__valor--small" id="perfil-antiguedad">—</strong>
+  </div>
+</section>
+
+<section class="card mb-8" aria-labelledby="carga-heading">
+  <div class="perfil-section-heading">
+    <div>
+      <h2 class="card__title" id="carga-heading">Carga horaria semanal</h2>
+      <p class="card__subtitle">Base de 33 h de formación + 4 h administrativas. Tope de 40 h.</p>
+    </div>
+  </div>
+  <div id="carga-indicador">
+    <p class="perfil-loading">Cargando carga horaria…</p>
+  </div>
+</section>
+
+<section class="card mb-8" aria-labelledby="fichas-heading">
+  <div class="perfil-section-heading">
+    <div>
+      <h2 class="card__title" id="fichas-heading">Fichas a cargo</h2>
+      <p class="card__subtitle" id="fichas-subtitle">Consulta tus asignaciones y competencias.</p>
+    </div>
+  </div>
+
+  <div class="perfil-empty estado-vacio hidden" id="fichas-mensaje" role="status">
+    <strong>No necesitas fichas a cargo aún.</strong>
+    <p>Como estás en tus primeros 3 meses como instructor, la gestora te asignará fichas más adelante.</p>
+  </div>
+
+  <div class="perfil-table-wrap tabla-desplazable" id="fichas-tabla-wrap">
+    <table class="table table--apilable">
+      <thead>
+        <tr>
+          <th scope="col">Ficha</th>
+          <th scope="col">Programa</th>
+          <th scope="col">Trimestre</th>
+          <th scope="col">Competencias</th>
+          <th scope="col">Horas semanales</th>
+        </tr>
+      </thead>
+      <tbody id="fichas-body">
+        <tr><td colspan="5" class="perfil-loading">Cargando fichas…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card mb-8" id="transversales-section" aria-labelledby="transversales-heading" {% if es_nuevo %}hidden{% endif %}>
+  <div class="perfil-section-heading">
+    <div>
+      <h2 class="card__title" id="transversales-heading">Transversales</h2>
+      <p class="card__subtitle">Solicita a la Gestora las asignaturas transversales que necesitan tus fichas. La Gestora decide cómo coordinarlas en la programación.</p>
+    </div>
+  </div>
+
+  <form id="form-transversales" novalidate>
+    <fieldset class="perfil-fieldset">
+      <legend class="perfil-legend">Selecciona las fichas a cargo</legend>
+      <div class="perfil-fichas-seleccion" id="transversales-fichas"></div>
+    </fieldset>
+
+    <fieldset class="perfil-fieldset">
+      <legend class="perfil-legend">Selecciona las asignaturas transversales</legend>
+      <div class="perfil-asignaturas" id="transversales-asignaturas">
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Inglés" />
+          <span>Inglés</span>
+        </label>
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Ética" />
+          <span>Ética</span>
+        </label>
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Promover" />
+          <span>Promover</span>
+        </label>
+        <label class="perfil-check">
+          <input type="checkbox" name="transversal" value="Salud Ocupacional" />
+          <span>Salud Ocupacional</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="perfil-detalles">
+      <div class="form-group perfil-detalles__ancho">
+        <label class="form-label" for="transversales-comentarios">Comentarios adicionales (opcional)</label>
+        <textarea
+          class="form-input perfil-comentarios"
+          id="transversales-comentarios"
+          name="comentarios"
+          maxlength="500"
+          placeholder="Escribe cualquier información que la Gestora deba tener en cuenta"
+        ></textarea>
+      </div>
+    </div>
+
+    <p class="form-hint mb-4" id="transversales-ayuda">Selecciona al menos una ficha y una asignatura para continuar.</p>
+    <button type="submit" class="btn btn-primary" id="btn-solicitar-transversales" disabled>
+      Enviar solicitud a la Gestora
+    </button>
+  </form>
+</section>
+
+<section class="card" id="solicitudes-section" aria-labelledby="solicitudes-heading">
+  <div class="perfil-section-heading">
+    <div>
+      <h2 class="card__title" id="solicitudes-heading">Solicitudes enviadas</h2>
+      <p class="card__subtitle">La Gestora coordinará los bloques confirmados.</p>
+    </div>
+  </div>
+  <div class="perfil-empty estado-vacio hidden" id="solicitudes-mensaje" role="status">
+    <strong>No has enviado solicitudes.</strong>
+    <p>Cuando solicites transversales, aquí verás el estado de coordinación.</p>
+  </div>
+  <div class="perfil-table-wrap tabla-desplazable" id="solicitudes-tabla-wrap">
+    <table class="table table--apilable">
+      <thead>
+        <tr>
+          <th scope="col">Ficha</th>
+          <th scope="col">Transversales</th>
+          <th scope="col">Comentarios</th>
+          <th scope="col">Fecha</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Gestora</th>
+        </tr>
+      </thead>
+      <tbody id="solicitudes-body">
+        <tr><td colspan="6" class="perfil-loading">Cargando solicitudes…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="perfil-notifications" id="perfil-notifications" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/carga.js') }}" defer></script>
+<script src="{{ url_for('static', path='js/perfil_instructor.js') }}" defer></script>
+{% endblock %}

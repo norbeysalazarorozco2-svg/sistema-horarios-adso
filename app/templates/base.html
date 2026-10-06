@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{% block meta_description %}Sistema de gestión y agendamiento de horarios SENA — ADSO{% endblock %}" />
+  <title>{% block title %}Sistema de Horarios{% endblock %} · SENA ADSO</title>
+
+  <!-- Tokens (fuente única) y estilos base globales -->
+  <link rel="stylesheet" href="{{ url_for('static', path='css/tokens.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
+  {% if modo_desarrollo %}
+  <!-- Herramientas de desarrollo: no forman parte de la interfaz de SIPA -->
+  <link rel="stylesheet" href="{{ url_for('static', path='css/dev-tools.css') }}" />
+  {% endif %}
+
+  <!-- Estilos específicos de la vista -->
+  {% block extra_styles %}{% endblock %}
+</head>
+<body>
+  {% include "components/iconos.html" %}
+
+  {# ── Detección de página de autenticación (solo presentación) ── #}
+  {% set es_auth = request.url.path.startswith('/auth') %}
+  {% set sesion_activa = sesion_activa | default(false, true) %}
+  {% set rol_actual = rol | default('', true) %}
+  {% set es_gestora = rol_actual == 'gestora' %}
+  {% set es_instructor = rol_actual == 'instructor' %}
+
+  <!-- ── Barra de navegación ── -->
+  <header class="navbar" role="banner">
+    <div class="navbar__inner">
+      <a href="/" class="navbar__brand" aria-label="SENA Horarios — Inicio">
+        <span class="navbar__logo" aria-hidden="true">S</span>
+        <span class="navbar__brand-text">
+          <span class="navbar__brand-name">SENA <em>Horarios</em></span>
+          <span class="navbar__brand-sub">
+            {% if es_gestora %}Panel de la Gestora{% else %}Gestión de instructores{% endif %}
+          </span>
+        </span>
+      </a>
+
+      {% if not es_auth %}
+      <button type="button" class="navbar__toggle" id="navbar-toggle"
+              aria-expanded="false" aria-controls="navbar-menu" aria-label="Abrir menú de navegación">
+        <span class="navbar__toggle-barras" aria-hidden="true"></span>
+      </button>
+
+      <div class="navbar__menu" id="navbar-menu">
+      {#
+        Las pestañas dependen del rol: la Gestora nunca ve la matriz de
+        disponibilidad ni el perfil del instructor, y viceversa.
+        Cada ítem: (ruta, id, ícono del sprite, texto).
+      #}
+      {% if es_gestora %}
+        {% set items_nav = [
+          ('/perfil-gestora', 'nav-perfil-gestora', 'inicio', 'Panel'),
+          ('/gestora/alertas', 'nav-gestora-alertas', 'triangulo', 'Alertas'),
+          ('/gestora/lideres', 'nav-gestora-lideres', 'insignia', 'Líderes'),
+          ('/gestora/equidad', 'nav-gestora-equidad', 'balanza', 'Equidad'),
+          ('/gestora/trimestre', 'nav-gestora-trimestre', 'calendario-check', 'Trimestre'),
+        ] %}
+      {% else %}
+        {% set items_nav = [
+          ('/disponibilidad', 'nav-disponibilidad', 'reloj', 'Disponibilidad'),
+          ('/mi-horario', 'nav-mi-horario', 'calendario-check', 'Mi horario'),
+          ('/perfil-instructor', 'nav-perfil-instructor', 'grupo', 'Mi perfil'),
+          ('/mi-ficha', 'nav-mi-ficha', 'libro', 'Mi ficha'),
+          ('/horas-extra', 'nav-horas-extra', 'reloj-arena', 'Horas extra'),
+        ] %}
+      {% endif %}
+      <nav aria-label="Navegación principal">
+        <ul class="navbar__nav" role="list">
+          {% for ruta, id_nav, icono_nav, texto_nav in items_nav %}
+          {% set es_activa = request.url.path == ruta %}
+          <li>
+            <a href="{{ ruta }}" id="{{ id_nav }}"
+               class="{% if es_activa %}active{% endif %}"
+               {% if es_activa %}aria-current="page"{% endif %}>
+              <svg class="icono" aria-hidden="true" focusable="false"><use href="#i-{{ icono_nav }}"></use></svg>
+              {{ texto_nav }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      <div class="navbar__right">
+        {# ── HERRAMIENTA DE DESARROLLO: selector rápido de rol ── #}
+        {% if modo_desarrollo %}
+        <div class="dev-tools dev-tools--en-linea">
+        <span class="dev-tools__etiqueta">Dev</span>
+        <form
+          class="role-switcher"
+          method="post"
+          action="/auth/simular-rol"
+          id="form-role-switcher"
+          title="Simulación de inicio de sesión por rol"
+        >
+          <label class="role-switcher__label" for="selector-rol">Simular rol</label>
+          <select
+            class="role-switcher__select"
+            id="selector-rol"
+            name="rol"
+            onchange="this.form.submit()"
+            aria-label="Simular inicio de sesión como rol"
+          >
+            <option value="" {% if not sesion_activa %}selected{% endif %}>— Sin sesión —</option>
+            <option value="instructor" {% if es_instructor %}selected{% endif %}>👨‍🏫 Instructor</option>
+            <option value="gestora" {% if es_gestora %}selected{% endif %}>👩‍💼 Gestora</option>
+          </select>
+          <noscript>
+            <button type="submit" class="btn btn-secondary btn-xs">Ir</button>
+          </noscript>
+        </form>
+        </div>
+        {% endif %}
+
+        {% if sesion_activa %}
+        <span class="session-chip" title="{{ usuario_nombre or 'Sesión activa' }}">
+          <span class="session-chip__avatar" aria-hidden="true">{{ (usuario_nombre or 'S')[:1] }}</span>
+          <span class="session-chip__nombre">{{ usuario_nombre or 'Sesión activa' }}</span>
+        </span>
+        <form method="post" action="/auth/cerrar-sesion" class="role-switcher__salir">
+          <button type="submit" class="btn btn-ghost btn-xs" id="btn-cerrar-sesion">
+            <svg class="icono" aria-hidden="true" focusable="false"><use href="#i-salir"></use></svg>
+            Salir
+          </button>
+        </form>
+        {% else %}
+        <a href="/auth/login" class="btn btn-secondary" id="nav-login">Iniciar sesión</a>
+        {% endif %}
+      </div>
+      </div><!-- /.navbar__menu -->
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- ── Contenido principal ── -->
+  {% block body %}
+  <main class="page-content" id="main-content">
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+  {% endblock %}
+
+  <!-- ── Pie de página ── -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer__inner">
+      <span class="footer__brand">
+        <span aria-hidden="true" class="dot">⬤</span> SENA · Sistema de Horarios ADSO
+      </span>
+      <span>© 2026 SENA · Todos los derechos reservados</span>
+    </div>
+  </footer>
+
+  <!-- Scripts específicos de la vista -->
+  {% block extra_scripts %}{% endblock %}
+
+  <script>
+    /* Navbar móvil y etiquetas de las tablas apilables. */
+    (function () {
+      'use strict';
+
+      /* ── Menú plegable (tableta y móvil) ── */
+      const navbar = document.querySelector('.navbar');
+      const toggle = document.getElementById('navbar-toggle');
+      if (navbar && toggle) {
+        const cerrar = () => {
+          navbar.classList.remove('navbar--abierto');
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-label', 'Abrir menú de navegación');
+        };
+        toggle.addEventListener('click', () => {
+          const abierto = navbar.classList.toggle('navbar--abierto');
+          toggle.setAttribute('aria-expanded', String(abierto));
+          toggle.setAttribute('aria-label', abierto ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+        });
+        document.addEventListener('keydown', (evento) => {
+          if (evento.key === 'Escape' && navbar.classList.contains('navbar--abierto')) {
+            cerrar();
+            toggle.focus();
+          }
+        });
+        document.addEventListener('click', (evento) => {
+          if (!navbar.contains(evento.target)) cerrar();
+        });
+      }
+
+      /* ── Tablas que se apilan como tarjetas en móvil ──
+         Copia el texto de cada <th> del encabezado al data-label de sus
+         celdas, también para las filas que las vistas pintan después. */
+      const etiquetarTabla = (tabla) => {
+        const titulos = [...tabla.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+        tabla.querySelectorAll('tbody tr').forEach((fila) => {
+          [...fila.children].forEach((celda, i) => {
+            if (titulos[i] && !celda.hasAttribute('data-label')) celda.setAttribute('data-label', titulos[i]);
+          });
+        });
+      };
+
+      document.querySelectorAll('table.table--apilable').forEach((tabla) => {
+        etiquetarTabla(tabla);
+        new MutationObserver(() => etiquetarTabla(tabla)).observe(tabla, { childList: true, subtree: true });
+      });
+    })();
+  </script>
+</body>
+</html>

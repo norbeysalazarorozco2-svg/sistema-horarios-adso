@@ -1,0 +1,560 @@
+/* ============================================================
+   DISPONIBILIDAD.CSS — Matriz de Disponibilidad de Instructores
+   Sistema de Horarios ADSO — SENA
+   ============================================================ */
+
+/* ── Encabezado ── */
+.dispon-header__badge {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+  font-family: var(--font-body);
+}
+
+/* Título de paso numerado (1. Competencia · 2. Horario) */
+.dispon-paso {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--sipa-texto);
+}
+
+.dispon-paso__numero {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--sipa-verde-tenue);
+  color: var(--sipa-verde-oscuro);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+/* ── Panel de filtros (competencias y RAPs) ── */
+.dispon-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  padding: var(--space-6) var(--space-8);
+  background: var(--sipa-superficie);
+  border: 1px solid var(--sipa-borde);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dispon-filters .dispon-paso { grid-column: 1 / -1; }
+
+.dispon-filters__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--sipa-texto);
+}
+
+.dispon-filters__label .req { color: var(--sipa-rojo); }
+
+/* ── Contenedor de la grilla ── */
+.dispon-grid-wrapper {
+  margin-bottom: var(--space-6);
+  padding: var(--space-6) var(--space-8);
+  background: var(--sipa-superficie);
+  border: 1px solid var(--sipa-borde);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dispon-grid-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin-bottom: var(--space-5);
+}
+
+.dispon-grid-ayuda {
+  font-size: var(--text-sm);
+  color: var(--sipa-texto-2);
+}
+
+/* El scroll horizontal vive aquí, no en la tarjeta, para que la
+   cabecera y la leyenda no se desplacen con la grilla. */
+.dispon-grid-scroll {
+  overflow-x: auto;
+  margin: 0 calc(var(--space-2) * -1);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Grilla CSS Grid ── */
+.dispon-grid {
+  display: grid;
+  /* col-0 = etiqueta de jornada, col-1..5 = días Lun-Vie */
+  grid-template-columns: 136px repeat(5, minmax(84px, 1fr));
+  gap: var(--space-2);
+  min-width: 680px;
+}
+
+/* ── Cabecera de día con medidor de horas continuas ── */
+.dispon-grid__header-cell {
+  --valor: 0%;
+  --dia-color: var(--sena-verde);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  text-align: center;
+  user-select: none;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-normal);
+}
+
+.dia__nombre {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--sipa-texto);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dia__medidor {
+  width: 100%;
+  max-width: 72px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--sipa-gris-tenue);
+}
+
+.dia__medidor-relleno {
+  display: block;
+  width: var(--valor);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dia-color);
+  transition: width var(--transition-normal), background var(--transition-normal);
+}
+
+.dia__horas {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--sipa-texto-2);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.dispon-grid__header-cell.dia--cerca { --dia-color: var(--amber-600); }
+.dispon-grid__header-cell.dia--cerca .dia__horas { color: var(--sipa-ambar); }
+
+.dispon-grid__header-cell.dia--limite {
+  --dia-color: var(--sipa-rojo);
+  background: var(--sipa-rojo-tenue);
+}
+
+.dispon-grid__header-cell.dia--limite .dia__horas { color: var(--sipa-rojo); }
+
+.dispon-grid__header-cell.dia--limite .dia__horas::after {
+  content: ' · tope';
+}
+
+/* Celda vacía (esquina) — fija al scroll horizontal */
+.dispon-grid__corner {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: var(--sipa-superficie);
+}
+
+/* ── Etiqueta de jornada/bloque (columna izquierda fija) ── */
+.dispon-grid__row-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  background: var(--sipa-superficie);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.row-label__jornada {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.row-label__jornada--mañana { color: var(--sipa-ambar); }
+.row-label__jornada--tarde  { color: var(--sipa-azul); }
+.row-label__jornada--noche  { color: var(--slate-600); }
+
+.row-label__horario {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--sipa-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Bloque de tiempo (celda interactiva) ── */
+.time-block {
+  position: relative;
+  min-height: 56px;
+  background: var(--sipa-fondo);
+  border: 1px solid var(--sipa-borde);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background    var(--transition-fast),
+    border-color  var(--transition-fast),
+    box-shadow    var(--transition-fast),
+    transform     180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.time-block:hover {
+  border-color: var(--green-400);
+  background: var(--sipa-verde-tenue);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.time-block:active { transform: scale(0.96); }
+
+.time-block:focus-visible {
+  border-radius: var(--radius-md);
+}
+
+/* Ícono de check interno */
+.time-block__check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity var(--transition-fast), transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-size: 1.05rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+/* ── Estado: SELECCIONADO ── */
+.time-block.selected {
+  background: var(--sipa-verde-oscuro);
+  border-color: var(--sipa-verde-oscuro);
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--sipa-verde-oscuro) 55%, transparent);
+  animation: bloque-seleccion 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.time-block.selected .time-block__check {
+  opacity: 1;
+  transform: scale(1);
+  color: #fff;
+}
+
+.time-block.selected:hover {
+  background: var(--sipa-verde-oscuro-hover);
+  border-color: var(--sipa-verde-oscuro-hover);
+}
+
+@keyframes bloque-seleccion {
+  0%   { transform: scale(0.92); }
+  60%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* ── Estado: superaría el límite de 9 h continuas ── */
+.time-block.excede-limite {
+  cursor: not-allowed;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--sipa-rojo-tenue),
+    var(--sipa-rojo-tenue) 5px,
+    var(--sipa-superficie) 5px,
+    var(--sipa-superficie) 10px
+  );
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--sipa-rojo) 35%, #fff);
+}
+
+.time-block.excede-limite:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--sipa-rojo);
+}
+
+/* ── Estado: DESHABILITADO ── */
+.time-block.disabled {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--slate-50),
+    var(--slate-50) 6px,
+    var(--slate-100) 6px,
+    var(--slate-100) 12px
+  );
+  border: 1px dashed var(--slate-300);
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.time-block.disabled:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--slate-300);
+}
+
+/* Bloque rechazado por superar las 9 h continuas del día */
+.time-block.rechazado {
+  animation: time-block-rechazo 0.4s ease;
+  border-color: var(--sipa-rojo);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sipa-rojo) 22%, transparent);
+}
+
+@keyframes time-block-rechazo {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-5px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(3px); }
+}
+
+/* ── Separadores visuales entre jornadas ── */
+.dispon-grid__separator {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: var(--space-1) 0;
+  background: var(--sipa-borde);
+}
+
+/* ── Leyenda de estados ── */
+.dispon-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--sipa-borde);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--sipa-texto-2);
+}
+
+.legend-item--regla {
+  margin-left: auto;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--sipa-gris-tenue);
+  font-weight: 600;
+  color: var(--sipa-texto);
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+.legend-swatch--libre {
+  background: var(--sipa-fondo);
+  border-color: var(--sipa-borde);
+}
+
+.legend-swatch--seleccionado {
+  background: var(--sipa-verde-oscuro);
+}
+
+.legend-swatch--excede {
+  background: repeating-linear-gradient(-45deg, var(--sipa-rojo-tenue), var(--sipa-rojo-tenue) 3px, #fff 3px, #fff 6px);
+  border: 1px dashed color-mix(in srgb, var(--sipa-rojo) 45%, #fff);
+}
+
+.legend-swatch--deshabilitado {
+  background: repeating-linear-gradient(-45deg, var(--slate-50), var(--slate-50) 4px, var(--slate-200) 4px, var(--slate-200) 8px);
+  border-color: var(--slate-300);
+}
+
+/* ── Panel de acciones (fijo al pie mientras se edita) ── */
+.dispon-actions {
+  position: sticky;
+  bottom: var(--space-4);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: color-mix(in srgb, var(--sipa-superficie) 94%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--sipa-borde);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.dispon-actions__info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dispon-actions__count {
+  min-width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--sipa-verde-oscuro);
+  background: var(--sipa-verde-tenue);
+  border-radius: var(--radius-md);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.dispon-actions__count-label {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--sipa-texto);
+  line-height: 1.35;
+}
+
+.dispon-actions__horas {
+  font-weight: 400;
+  color: var(--sipa-texto-2);
+}
+
+.dispon-actions__botones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Pulso al guardar */
+.btn-primary.saving {
+  animation: save-pulse 1s ease infinite;
+}
+
+@keyframes save-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sena-verde) 40%, transparent); }
+  70%  { box-shadow: 0 0 0 14px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ── Indicador vacío ── */
+.dispon-empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--slate-400);
+  font-size: var(--text-sm);
+}
+
+/* ── Zona de notificaciones / toast ── */
+/* Por encima de la barra de acciones fija */
+.dispon-notifications {
+  position: fixed;
+  bottom: 112px;
+  right: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  z-index: 500;
+  pointer-events: none;
+  max-width: 380px;
+  width: 100%;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--sipa-borde);
+  border-left: 4px solid var(--slate-400);
+  background: var(--sipa-superficie);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--sipa-texto);
+  pointer-events: auto;
+  animation: toast-entrada 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.toast.removing { animation: toast-out 0.25s ease forwards; }
+
+.toast__icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+.toast strong { color: var(--sipa-texto); }
+
+.toast-success { border-left-color: var(--sena-verde); }
+.toast-error   { border-left-color: var(--sipa-rojo); }
+.toast-info    { border-left-color: var(--sipa-azul); }
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 767px) {
+  .dispon-filters { grid-template-columns: 1fr; padding: var(--space-5); }
+
+  .dispon-grid-wrapper { padding: var(--space-5) var(--space-4); }
+
+  .dispon-grid {
+    grid-template-columns: 92px repeat(5, minmax(64px, 1fr));
+    gap: 6px;
+    min-width: 520px;
+  }
+
+  .row-label__horario { font-size: var(--text-xs); }
+  .time-block { min-height: 48px; }
+
+  .legend-item--regla { margin-left: 0; }
+
+  .dispon-actions {
+    bottom: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .dispon-actions__botones { width: 100%; }
+  .dispon-actions__botones .btn { flex: 1 1 auto; }
+  .dispon-actions__botones .btn-lg { min-height: 44px; padding: var(--space-2) var(--space-4); font-size: var(--text-sm); }
+
+  .dispon-notifications {
+    bottom: 150px;
+    right: var(--space-4);
+    left: var(--space-4);
+    width: auto;
+    max-width: none;
+  }
+}

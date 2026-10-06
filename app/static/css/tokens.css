@@ -1,0 +1,232 @@
+/* ============================================================
+   TOKENS.CSS — Fuente única de tokens visuales de SIPA
+   Sistema de Programación de Horarios ADSO — SENA
+
+   Todo valor visual (color, tipografía, tamaños, espaciado,
+   bordes, radios, sombras, estados y breakpoints) se define
+   aquí. base.css, sipa.css y los CSS de cada vista solo
+   consumen variables; no deben declarar colores de marca
+   literales.
+
+   ┌──────────────────────────────────────────────────────────┐
+   │ DECISIONES PENDIENTES DE VALIDACIÓN (Manual SENA)        │
+   │                                                          │
+   │ 1. Verde SENA: el código previo usa #009A44 (Pantone     │
+   │    355C) y la propuesta visual usaba #39A900. Mientras   │
+   │    no se valide con el Manual de Identidad SENA vigente, │
+   │    se conserva el valor ya existente en el código.       │
+   │    Cambiarlo aquí (--sena-verde) lo propaga a todo; la   │
+   │    escala --green-* derivada debe regenerarse entonces.  │
+   │                                                          │
+   │ 2. Tipografía: el código previo usa Inter (texto) y      │
+   │    Outfit (títulos); la propuesta visual proponía Work   │
+   │    Sans. Se conservan Inter/Outfit de forma provisional  │
+   │    (--font-body / --font-heading).                       │
+   │                                                          │
+   │ 3. Logo: el uso del logo SENA (versiones, área de        │
+   │    protección) debe seguir el Manual. La interfaz solo   │
+   │    reserva el espacio (.sipa-marca__logo).               │
+   └──────────────────────────────────────────────────────────┘
+   ============================================================ */
+
+/* Tipografía provisional — PENDIENTE (ver punto 2). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
+
+:root {
+  /* ══ MARCA ════════════════════════════════════════════════ */
+  /* PENDIENTE DE VALIDACIÓN: #009A44 (código previo) vs #39A900 (propuesta). */
+  --sena-verde:        #009a44;
+  /* Verde oscuro SIPA: sidebar, botones primarios y textos verdes (contraste AA). */
+  --sipa-verde-oscuro: #0e4d2a;
+  --sipa-verde-oscuro-hover: #0a3a20;
+  /* Tonos derivados de la marca: cambian solos si cambia --sena-verde. */
+  --sipa-verde-tenue:  color-mix(in srgb, var(--sena-verde) 10%, #ffffff);
+  --sipa-verde-borde:  color-mix(in srgb, var(--sena-verde) 35%, #ffffff);
+
+  /* ══ ESCALA VERDE (legado del prototipo) ══════════════════
+     Derivada de #009A44. Si se valida otro verde SENA, hay que
+     regenerar esta escala. --green-600 apunta a la marca para
+     no duplicar el valor. */
+  --green-50:  #eefaf2;
+  --green-100: #d5f3e2;
+  --green-200: #ace6c5;
+  --green-300: #7ad4a3;
+  --green-400: #47bc80;
+  --green-500: #21a25f;
+  --green-600: var(--sena-verde);
+  --green-700: #0a7d39;
+  --green-800: #0b6332;
+  --green-900: #0a4a27;
+
+  /* ══ GRISES ═══════════════════════════════════════════════ */
+  /* Escala slate (legado del prototipo). */
+  --slate-50:  #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* Neutros SIPA (propuesta visual). */
+  --sipa-fondo:          #f4f6f5;
+  --sipa-superficie:     #ffffff;
+  --sipa-borde:          #e2e7e4;
+  --sipa-borde-fuerte:   #c9d1cc;
+  --sipa-texto:          #1e2a23;
+  --sipa-texto-2:        #5b6660;
+  --sipa-texto-invertido:#ffffff;
+
+  /* ══ SEMÁNTICOS ═══════════════════════════════════════════ */
+  --sipa-rojo:         #b42318;
+  --sipa-rojo-tenue:   #fdecea;
+  --sipa-ambar:        #8a5300;
+  --sipa-ambar-tenue:  #fff4e0;
+  --sipa-azul:         #1f5fa8;
+  --sipa-azul-tenue:   #e8f0fb;
+  --sipa-gris-estado:  #5b6660;
+  --sipa-gris-tenue:   #eef1ef;
+
+  /* Secundarios del prototipo (legado). */
+  --blue-50:  #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+
+  --amber-50:  #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-600: #d97706;
+  --amber-700: #b45309;
+
+  --red-50:  #fef2f2;
+  --red-100: #fee2e2;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+
+  /* ══ ESTADOS (badge: fondo / texto / borde) ═══════════════ */
+  --estado-pendiente-bg:   var(--sipa-ambar-tenue);
+  --estado-pendiente-fg:   var(--sipa-ambar);
+  --estado-completo-bg:    var(--sipa-verde-tenue);
+  --estado-completo-fg:    var(--sipa-verde-oscuro);
+  --estado-en-proceso-bg:  var(--sipa-azul-tenue);
+  --estado-en-proceso-fg:  var(--sipa-azul);
+  --estado-generado-bg:    var(--sipa-superficie);
+  --estado-generado-fg:    var(--sipa-verde-oscuro);
+  --estado-generado-borde: var(--sena-verde);
+  --estado-publicado-bg:   var(--sipa-verde-oscuro);
+  --estado-publicado-fg:   var(--sipa-texto-invertido);
+  --estado-bloqueado-bg:   var(--sipa-gris-tenue);
+  --estado-bloqueado-fg:   var(--sipa-gris-estado);
+  --estado-alerta-bg:      var(--sipa-ambar-tenue);
+  --estado-alerta-fg:      var(--sipa-ambar);
+  --estado-hueco-bg:       var(--sipa-rojo-tenue);
+  --estado-hueco-fg:       var(--sipa-rojo);
+  --estado-resuelto-bg:    var(--sipa-verde-tenue);
+  --estado-resuelto-fg:    var(--sipa-verde-oscuro);
+  --estado-por-definir-fg: var(--sipa-texto-2);
+  --estado-por-definir-borde: var(--sipa-borde-fuerte);
+
+  /* ══ ALIAS DEL PROTOTIPO ══════════════════════════════════ */
+  --color-bg:           #f4f6f9;
+  --color-surface:      #ffffff;
+  --color-surface-2:    #f8fafc;
+  --color-border:       #e2e8f0;
+  --color-border-hover: #cbd5e1;
+
+  --color-primary:      var(--green-600);
+  --color-primary-dim:  var(--green-700);
+  --color-primary-glow: color-mix(in srgb, var(--sena-verde) 12%, transparent);
+  --color-primary-text: var(--green-700);
+  --color-accent:       var(--blue-600);
+  --color-accent-dim:   var(--blue-700);
+  --color-warning:      var(--amber-600);
+  --color-danger:       var(--red-600);
+  --color-success:      var(--green-600);
+
+  /* ══ TIPOGRAFÍA ═══════════════════════════════════════════ */
+  /* PENDIENTE DE VALIDACIÓN: Inter/Outfit (código previo) vs Work Sans (propuesta). */
+  --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+
+  --text-xs:   0.75rem;    /* 12 · etiquetas */
+  --text-sm:   0.875rem;   /* 14 · mínimo para metadatos */
+  --text-base: 1rem;       /* 16 · cuerpo */
+  --text-lg:   1.125rem;   /* 18 · H3 */
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+
+  /* Escala jerárquica SIPA. */
+  --sipa-texto-display: 2rem;      /* 32 · números KPI */
+  --sipa-texto-h1:      1.75rem;   /* 28 · título de pantalla */
+  --sipa-texto-h2:      1.375rem;  /* 22 · tarjeta principal */
+  --sipa-texto-h3:      1.125rem;  /* 18 · título de tarjeta */
+  --sipa-peso-normal:   400;
+  --sipa-peso-medio:    500;
+  --sipa-peso-semibold: 600;
+  --sipa-peso-bold:     700;
+
+  /* ══ ESPACIADO ════════════════════════════════════════════ */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ══ TAMAÑOS DE LAYOUT ════════════════════════════════════ */
+  --sipa-header-alto:        64px;
+  --sipa-sidebar-ancho:      240px;
+  --sipa-sidebar-compacto:   72px;
+  --sipa-nav-inferior-alto:  64px;
+  --sipa-contenido-max:      1280px;
+  --sipa-control-alto:       44px;   /* objetivo táctil mínimo */
+  --sipa-fila-tabla:         52px;
+  --sipa-barra-estado:       4px;    /* barra lateral de alertas y filas */
+
+  /* ══ BORDES Y RADIOS ══════════════════════════════════════ */
+  --sipa-borde-ancho: 1px;
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  18px;
+  --radius-full: 9999px;
+  --sipa-radio-boton:   8px;
+  --sipa-radio-tarjeta: 12px;
+
+  /* ══ SOMBRAS ══════════════════════════════════════════════ */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 2px 4px -1px rgba(16, 24, 40, 0.06), 0 6px 12px -4px rgba(16, 24, 40, 0.10);
+  --shadow-lg: 0 8px 24px -6px rgba(16, 24, 40, 0.12), 0 16px 32px -12px rgba(16, 24, 40, 0.10);
+  --shadow-glow: 0 4px 16px color-mix(in srgb, var(--sena-verde) 22%, transparent);
+  --sipa-sombra-tarjeta: 0 1px 2px rgba(16, 24, 40, 0.04);
+
+  /* ══ FOCO (accesibilidad) ═════════════════════════════════ */
+  --ring-green: color-mix(in srgb, var(--sena-verde) 25%, transparent);
+  --ring-blue:  rgba(37, 99, 235, 0.25);
+  --sipa-foco:  0 0 0 3px var(--sipa-superficie), 0 0 0 5px var(--sipa-verde-oscuro);
+
+  /* ══ TRANSICIONES ═════════════════════════════════════════ */
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow:   400ms ease;
+
+  /* ══ BREAKPOINTS (referencia) ═════════════════════════════
+     Las variables CSS no funcionan dentro de @media; estos
+     valores son la referencia que deben usar todas las media
+     queries de SIPA:
+       móvil      < 768px   → navegación inferior, tablas apiladas
+       tableta    768–1199  → sidebar compacto (solo íconos)
+       escritorio ≥ 1200px  → sidebar completo */
+  --bp-tableta:    768px;
+  --bp-escritorio: 1200px;
+}

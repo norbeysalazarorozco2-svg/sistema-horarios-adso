@@ -1,0 +1,143 @@
+{#
+  CATÁLOGO DE COMPONENTES — SOLO DESARROLLO
+  Muestra el sistema visual base de SIPA con datos de ejemplo.
+  No es una pantalla del producto; la ruta solo existe cuando
+  APP_ENV no es "production".
+#}
+{% extends "layouts/app.html" %}
+{% import "components/ui.html" as ui %}
+
+{% block title %}Catálogo de componentes{% endblock %}
+
+{% block contenido %}
+<div class="dev-tools">
+  <span class="dev-tools__etiqueta">Herramienta de desarrollo — no forma parte de SIPA</span>
+  <p class="text-sm">
+    Vista previa del sistema visual. Datos de ejemplo.
+    Ver como:
+    <a href="?rol=instructor">instructor</a> ·
+    <a href="?rol=lider">líder de ficha</a> ·
+    <a href="?rol=gestora">gestora</a> ·
+    fase:
+    <a href="?rol={{ rol_vista }}&fase=actualizacion">actualización</a> ·
+    <a href="?rol={{ rol_vista }}&fase=solicitudes">solicitudes</a> ·
+    <a href="?rol={{ rol_vista }}&fase=generacion">generación</a>
+  </p>
+</div>
+
+<header class="sipa-pagina__encabezado mt-6">
+  <nav class="sipa-pagina__ruta" aria-label="Ruta de navegación"><a href="#">Inicio</a><span aria-hidden="true">›</span><span>Catálogo</span></nav>
+  <h1 class="sipa-pagina__titulo">Catálogo de componentes</h1>
+  <p class="sipa-pagina__lema">El instructor declara, el sistema programa y la gestora decide solo lo que el sistema no puede resolver.</p>
+</header>
+
+<section class="sipa-seccion" aria-labelledby="t-estados">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-estados">Badges de estado</h2>
+  <div class="flex flex-wrap gap-3">
+    {% for e in ['pendiente','completo','en-proceso','generado','publicado','bloqueado','alerta','hueco','resuelto','por-definir'] %}
+      {{ ui.badge(e) }}
+    {% endfor %}
+  </div>
+</section>
+
+<section class="sipa-seccion" aria-labelledby="t-kpi">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-kpi">KPI</h2>
+  <div class="sipa-rejilla sipa-rejilla--kpi">
+    {{ ui.kpi('Alertas abiertas', 3, 'triangulo', 'alerta') }}
+    {{ ui.kpi('Solicitudes', 2, 'sobre', 'solicitud') }}
+    {{ ui.kpi('Huecos', 1, 'hueco', 'hueco') }}
+    {{ ui.kpi('Fichas cubiertas', '4/5', 'grupo') }}
+    {{ ui.kpi('Instructores con datos', '7/9', 'declarar') }}
+  </div>
+</section>
+
+<section class="sipa-seccion" aria-labelledby="t-tarjetas">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-tarjetas">Tarjetas y autoría</h2>
+  <div class="sipa-rejilla sipa-rejilla--3">
+    {% call ui.tarjeta('Estado de mis datos', 'declaras', id='ej-datos', nivel=3) %}
+      <p>{{ ui.badge('completo') }}</p>
+      <div class="sipa-tarjeta__acciones">{{ ui.boton('Actualizar mis datos', 'primario') }}</div>
+    {% endcall %}
+    {% call ui.tarjeta('Estado de mi horario', 'sistema', id='ej-horario', nivel=3) %}
+      <p>{{ ui.badge('generado') }}</p>
+      <div class="sipa-tarjeta__acciones">{{ ui.boton('Ver mi horario', 'secundario') }}</div>
+    {% endcall %}
+    {% call ui.tarjeta('Hueco de RAP', 'gestora', subtitulo='Ficha de ejemplo · Lunes 07:00–09:00', variante='hueco', id='ej-hueco', nivel=3) %}
+      <p>{{ ui.badge('hueco') }}</p>
+    {% endcall %}
+  </div>
+</section>
+
+<section class="sipa-seccion" aria-labelledby="t-botones">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-botones">Botones</h2>
+  <div class="flex flex-wrap items-center gap-4">
+    {{ ui.boton('Primario', 'primario') }}
+    {{ ui.boton('Secundario', 'secundario') }}
+    {{ ui.boton('Terciario', 'terciario') }}
+    {{ ui.boton('Asignar', 'primario', bloqueado='Rompe la regla de 9 h continuas', id='ej-bloqueado') }}
+    {{ ui.boton('Dejar hueco abierto', 'secundario', por_definir='Q33') }}
+  </div>
+</section>
+
+<section class="sipa-seccion" aria-labelledby="t-alertas">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-alertas">Alertas</h2>
+  <div class="flex-col gap-3">
+    {{ ui.alerta('hueco', 'Hueco de RAP', 'Ficha de ejemplo · Lunes 07:00–09:00', 'Atender', '#') }}
+    {{ ui.alerta('solicitud', 'Nueva solicitud de transversales', 'Ficha de ejemplo · 2 transversales', 'Atender', '#') }}
+    {{ ui.alerta('sobrecarga', 'Instructor por encima de su carga normal', 'Instructor de ejemplo') }}
+    {{ ui.alerta('plazo', 'El plazo de actualización vence pronto') }}
+    {{ ui.alerta('exito', 'Solicitud enviada') }}
+    {{ ui.alerta('error', 'No se pudo guardar') }}
+  </div>
+</section>
+
+<section class="sipa-seccion" aria-labelledby="t-tabla">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-tabla">Tabla</h2>
+  {% call ui.tabla(['Instructor', {'texto': 'Carga actual', 'num': True}, 'Impedimento', 'Acción'], caption='Candidatos de ejemplo') %}
+    <tr>
+      {{ ui.celda('Instructor', 'Instructor A') }}
+      {{ ui.celda('Carga actual', '34 h', num=True) }}
+      <td data-etiqueta="Impedimento">—</td>
+      <td data-etiqueta="Acción">{{ ui.boton('Asignar', 'primario', pequeno=True) }}</td>
+    </tr>
+    <tr class="sipa-fila--alerta">
+      {{ ui.celda('Instructor', 'Instructor B') }}
+      {{ ui.celda('Carga actual', '36 h', num=True) }}
+      <td data-etiqueta="Impedimento">{{ ui.badge('alerta', 'Carga completa') }}</td>
+      <td data-etiqueta="Acción">{{ ui.boton('Asignar', 'primario', pequeno=True) }}</td>
+    </tr>
+    <tr class="sipa-fila--bloqueado">
+      {{ ui.celda('Instructor', 'Instructor C') }}
+      {{ ui.celda('Carga actual', '33 h', num=True) }}
+      <td data-etiqueta="Impedimento">{{ ui.badge('bloqueado', 'Supera 9 h continuas') }}</td>
+      <td data-etiqueta="Acción">{{ ui.boton('Asignar', 'primario', pequeno=True, bloqueado='Regla dura: 9 h continuas', id='ej-bloq-c') }}</td>
+    </tr>
+  {% endcall %}
+</section>
+
+<section class="sipa-seccion" aria-labelledby="t-vacio">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-vacio">Estado vacío y por definir</h2>
+  <div class="sipa-rejilla sipa-rejilla--2">
+    {{ ui.vacio('Ningún instructor que domine este RAP está disponible en esta franja', icono_nombre='hueco') }}
+    <div class="flex-col gap-3">
+      {{ ui.por_definir('Ver horario de la ficha', 'Q14') }}
+      {{ ui.por_definir('Límite de horas extra', 'Q5/Q34') }}
+    </div>
+  </div>
+</section>
+
+<section class="sipa-seccion" aria-labelledby="t-toast">
+  <h2 class="sipa-tarjeta__titulo mb-4" id="t-toast">Toast</h2>
+  {{ ui.boton('Mostrar toast', 'secundario', id='ej-toast') }}
+</section>
+{% endblock %}
+
+{% block toasts %}
+  {{ ui.toast('La gestora recibió tu solicitud') }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById('ej-toast')?.addEventListener('click', () => window.SIPA.toast('Mensaje de confirmación de ejemplo', 'info'));
+</script>
+{% endblock %}
