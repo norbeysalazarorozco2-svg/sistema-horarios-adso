@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Aprobar trimestre{% endblock %}
+{% block meta_description %}Verificaciones previas y aprobación final del horario del trimestre.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/trimestre_gestora.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading trimestre-heading">
+  <div>
+    <span class="page-heading__eyebrow">Gestora · Cierre</span>
+    <div class="flex items-center gap-3 flex-wrap">
+      <h1 class="page-heading__title" id="trimestre-titulo">Aprobar trimestre</h1>
+      <span class="trimestre-estado" id="trimestre-estado" hidden></span>
+    </div>
+    <p class="page-heading__subtitle">Revisa las reglas antes de publicar el horario. Solo la gestora aprueba el trimestre final.</p>
+  </div>
+  <div class="trimestre-header-actions">
+    <a class="btn btn-ghost" href="/gestora/alertas">← Alertas de huecos</a>
+    <button type="button" class="btn btn-secondary" id="btn-actualizar">🔄 Actualizar</button>
+  </div>
+</header>
+
+<div class="trimestre-aviso" id="trimestre-aviso" role="status" aria-live="polite">
+  <p class="trimestre-aviso__texto">Cargando verificaciones…</p>
+</div>
+
+<div class="trimestre-rejilla">
+  <section class="card" aria-labelledby="verificaciones-heading">
+    <h2 class="card__title" id="verificaciones-heading">Verificaciones</h2>
+    <p class="card__subtitle">Las bloqueantes impiden aprobar; las advertencias se pueden aceptar.</p>
+    <ul class="trimestre-verificaciones" id="trimestre-verificaciones"></ul>
+  </section>
+
+  <div class="trimestre-lateral">
+    <!-- Aprobar (trimestre abierto) -->
+    <section class="card hidden" id="panel-aprobar" aria-labelledby="aprobar-heading">
+      <h2 class="card__title" id="aprobar-heading">Aprobar y publicar</h2>
+      <form class="trimestre-form" id="form-aprobar" novalidate>
+        <ul class="trimestre-efectos">
+          <li>Se publica el horario para los instructores.</li>
+          <li>Se guarda el cierre de carga para la regla de equidad.</li>
+          <li>Se congelan líderes y horas extra hasta reabrir.</li>
+        </ul>
+        <label class="trimestre-check hidden" id="confirmar-advertencias-wrap">
+          <input type="checkbox" id="confirmar-advertencias" />
+          <span id="confirmar-advertencias-texto">Revisé las advertencias y apruebo con ellas.</span>
+        </label>
+        <label class="form-label" for="observaciones">Observaciones (opcional)</label>
+        <textarea class="form-input" id="observaciones" rows="3" maxlength="500"
+                  placeholder="Ej.: la ficha 3365261 queda con hueco por falta de instructor."></textarea>
+        <p class="trimestre-error hidden" id="aprobar-error" role="alert"></p>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-aprobar" disabled>Aprobar y publicar horario</button>
+        <p class="trimestre-motivo" id="aprobar-motivo"></p>
+      </form>
+    </section>
+
+    <!-- Aprobado -->
+    <section class="card hidden" id="panel-aprobado" aria-labelledby="aprobado-heading">
+      <h2 class="card__title" id="aprobado-heading">Horario publicado</h2>
+      <div id="aprobado-detalle"></div>
+      <form class="trimestre-form trimestre-reabrir" id="form-reabrir" novalidate>
+        <label class="form-label" for="motivo-reabrir">Motivo para reabrir</label>
+        <textarea class="form-input" id="motivo-reabrir" rows="2" maxlength="300"
+                  placeholder="Ej.: un instructor se retiró y hay que reasignar su ficha."></textarea>
+        <p class="trimestre-error hidden" id="reabrir-error" role="alert"></p>
+        <button type="submit" class="btn btn-danger btn-full">Reabrir trimestre</button>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="historial-heading">
+      <h2 class="card__title" id="historial-heading">Historial</h2>
+      <ul class="trimestre-historial" id="trimestre-historial"></ul>
+    </section>
+  </div>
+</div>
+
+<div class="trimestre-notificaciones" id="trimestre-notificaciones" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/trimestre_gestora.js') }}" defer></script>
+{% endblock %}
