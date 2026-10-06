@@ -1,0 +1,204 @@
+/* ============================================================
+   EQUIDAD_GESTORA.CSS — Equidad entre trimestres (js/equidad_gestora.js)
+   Aviso, pills, barras de progreso y .tabla-desplazable vienen de base.css.
+   ============================================================ */
+
+/* ── Tabla ── */
+
+.equidad-tabla-wrap {
+  margin-top: var(--space-2);
+  border: 1px solid var(--sipa-borde);
+  border-radius: var(--radius-md);
+}
+
+.equidad-tabla {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.equidad-th,
+.equidad-td {
+  padding: var(--space-4);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--sipa-borde);
+}
+
+tbody tr:last-child > .equidad-th,
+tbody tr:last-child > .equidad-td { border-bottom: none; }
+
+thead .equidad-th {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sipa-texto-2);
+  white-space: nowrap;
+  background: var(--sipa-fondo);
+}
+
+/* Columna del instructor fija al desplazar en horizontal */
+.equidad-tabla tr > .equidad-th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--sipa-superficie);
+  box-shadow: inset -1px 0 0 var(--sipa-borde);
+}
+
+.equidad-tabla thead tr > .equidad-th:first-child { background: var(--sipa-fondo); }
+
+.equidad-th--fila {
+  font-weight: 600;
+  color: var(--sipa-texto);
+  white-space: nowrap;
+}
+
+.equidad-tabla tbody tr { transition: background var(--transition-fast); }
+.equidad-tabla tbody tr:hover > * { background: color-mix(in srgb, var(--sipa-fondo) 70%, #fff); }
+
+.equidad-fila--compensa > .equidad-td,
+.equidad-tabla .equidad-fila--compensa > .equidad-th:first-child {
+  background: color-mix(in srgb, var(--sipa-azul-tenue) 70%, #fff);
+}
+
+.equidad-td {
+  min-width: 112px;
+  font-size: var(--text-sm);
+}
+
+.equidad-td--estado { min-width: 240px; }
+
+.equidad-celda {
+  display: inline-block;
+  padding: 1px 0;
+  font-weight: 700;
+  color: var(--sipa-texto);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.equidad-celda--tope {
+  padding: 1px 8px;
+  color: var(--sipa-ambar);
+  background: var(--sipa-ambar-tenue);
+  border-radius: var(--radius-full);
+}
+
+.equidad-celda--curso {
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  outline: 1px dashed var(--sipa-borde-fuerte);
+}
+
+/* Mini barra de carga sobre 40 h */
+.equidad-barra {
+  display: block;
+  max-width: 96px;
+  height: 4px;
+  margin-top: 6px;
+}
+
+.equidad-extra,
+.equidad-registrado {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.equidad-extra      { color: var(--sipa-ambar); }
+.equidad-registrado { color: var(--sipa-verde-oscuro); }
+
+.equidad-vacio { color: var(--slate-400); }
+
+.equidad-detalle {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--sipa-texto-2);
+}
+
+.equidad-detalle--alerta {
+  font-weight: 700;
+  color: var(--sipa-rojo);
+}
+
+.equidad-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-xs);
+  color: var(--sipa-texto-2);
+}
+
+.equidad-leyenda__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.equidad-leyenda .equidad-extra { display: inline; margin: 0; }
+
+/* ── Cierre ── */
+
+.equidad-cierre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+}
+
+.equidad-cierre .card__subtitle { margin-bottom: 0; }
+
+/* ── Notificaciones ── */
+
+.equidad-notificaciones {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 380px;
+}
+
+.equidad-toast {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--sipa-texto-2);
+  background: var(--sipa-superficie);
+  border: 1px solid var(--sipa-borde);
+  border-left: 4px solid var(--sena-verde);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  animation: toast-entrada 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.equidad-toast strong { color: var(--sipa-texto); }
+.equidad-toast--error { border-left-color: var(--sipa-rojo); }
+
+@media (max-width: 767px) {
+  .equidad-th,
+  .equidad-td { padding: var(--space-3); }
+
+  .equidad-cierre .btn { width: 100%; }
+
+  .equidad-notificaciones {
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: var(--space-4);
+    max-width: none;
+  }
+}
