@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Mi horario{% endblock %}
+{% block meta_description %}Tu horario semanal: fichas, competencias y ambientes que te asignó la gestora.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/mi_horario.css') }}" />
+{% endblock %}
+
+{% block content %}
+<header class="page-heading">
+  <div>
+    <span class="page-heading__eyebrow">Instructor</span>
+    <h1 class="page-heading__title">Mi horario</h1>
+    <p class="page-heading__subtitle" id="mi-horario-subtitulo">Cargando tu horario…</p>
+  </div>
+  <div class="page-heading__acciones">
+    <a class="btn btn-secondary" href="/disponibilidad">Mi disponibilidad</a>
+  </div>
+</header>
+
+<div class="alert alert-error mb-6 hidden" id="mi-horario-error" role="alert"></div>
+
+<section class="card mi-horario-vacio hidden" id="mi-horario-vacio" aria-labelledby="mi-horario-vacio-titulo">
+  <span class="mi-horario-vacio__icono" aria-hidden="true">
+    <svg class="icono" focusable="false"><use href="#i-calendario-check"></use></svg>
+  </span>
+  <h2 class="card__title" id="mi-horario-vacio-titulo"></h2>
+  <p class="card__subtitle" id="mi-horario-vacio-texto"></p>
+</section>
+
+<div id="mi-horario-contenido" class="hidden">
+  <ul class="mi-horario-resumen" aria-label="Resumen de tu semana">
+    <li class="card mi-horario-dato"><span class="mi-horario-dato__valor" id="dato-horas">—</span><span class="mi-horario-dato__etiqueta">horas por semana</span></li>
+    <li class="card mi-horario-dato"><span class="mi-horario-dato__valor" id="dato-sesiones">—</span><span class="mi-horario-dato__etiqueta">clases por semana</span></li>
+    <li class="card mi-horario-dato"><span class="mi-horario-dato__valor" id="dato-fichas">—</span><span class="mi-horario-dato__etiqueta">fichas</span></li>
+  </ul>
+
+  <section class="card" aria-labelledby="mi-horario-semana">
+    <h2 class="card__title" id="mi-horario-semana">Tu semana</h2>
+    <p class="card__subtitle">Se repite todas las semanas del trimestre. Solo incluye franjas que marcaste como disponibles.</p>
+    <div class="mi-horario-scroll">
+      <div class="mi-horario-grilla" id="mi-horario-grilla" role="table" aria-label="Horario semanal"></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='js/mi_horario.js') }}" defer></script>
+{% endblock %}
